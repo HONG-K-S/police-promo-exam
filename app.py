@@ -1,10 +1,11 @@
 # Flask 웹 애플리케이션의 메인 파일입니다.
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, current_user  # Flask 웹 프레임워크의 필요한 기능들을 가져옵니다.
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 import os  # 운영체제 관련 기능을 사용하기 위한 모듈
 import random  # 무작위 선택을 위한 파이썬 기본 라이브러리
 from functools import wraps  # 데코레이터를 위한 파이썬 기본 라이브러리
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 # 데이터베이스 설정과 모델 가져오기
