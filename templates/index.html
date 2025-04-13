@@ -1,64 +1,83 @@
 {% extends "base.html" %}
 
-{% block title %}경찰 승진 시험 문제 은행{% endblock %}
+{% block title %}문제 은행{% endblock %}
 
 {% block content %}
-<header>
-    <h1>경찰 승진 시험 문제 은행</h1>
-</header>
-
-<main>
-    <section class="category-selection">
+<div class="container">
+    <h1>문제 은행</h1>
+    
+    <!-- 카테고리 선택 섹션 -->
+    <div class="category-selection">
         <h2>카테고리 선택</h2>
         <div class="categories">
             {% for category in categories %}
-            <div class="category-card" data-category-id="{{ category.id }}">
-                <h3>{{ category.name }}</h3>
-                <div class="subcategories" id="subcategories-{{ category.id }}"></div>
+            <div class="category-item">
+                <input type="checkbox" id="category-{{ category.id }}" name="categories" value="{{ category.id }}">
+                <label for="category-{{ category.id }}">{{ category.name }}</label>
             </div>
             {% endfor %}
         </div>
-    </section>
+        
+        <div class="question-controls">
+            <div class="form-group">
+                <label for="num-questions">문제 수:</label>
+                <input type="number" id="num-questions" min="1" max="20" value="5">
+            </div>
+            <button id="generate-questions" class="btn btn-primary">문제 생성</button>
+        </div>
+    </div>
 
-    <section class="question-controls">
-        <button id="generate-questions" class="primary-button">문제 생성</button>
-    </section>
+    <!-- 사용자 통계 섹션 -->
+    <div id="user-stats" class="user-stats" style="display: none;">
+        <h2>내 통계</h2>
+        <div class="stats-container">
+            <!-- 통계가 여기에 동적으로 로드됩니다 -->
+        </div>
+    </div>
 
-    <section class="questions" id="questions-container"></section>
-</main>
+    <!-- 문제 표시 섹션 -->
+    <div id="questions-container" style="display: none;">
+        <div class="question-navigation">
+            <button id="prev-question" class="btn btn-secondary" style="display: none;">이전 문제</button>
+            <span id="current-question">문제 1</span>
+            <span id="total-questions">/ 5</span>
+            <button id="next-question" class="btn btn-secondary" style="display: none;">다음 문제</button>
+        </div>
+        
+        <div id="question-display">
+            <!-- 문제가 여기에 동적으로 로드됩니다 -->
+        </div>
+        
+        <div class="question-controls">
+            <button id="submit-answer" class="btn btn-primary">정답 제출</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // 하위 카테고리 로드
-    document.querySelectorAll('.category-card').forEach(card => {
-        const categoryId = card.dataset.categoryId;
-        fetch(`/get_subcategories/${categoryId}`)
-            .then(response => response.json())
-            .then(subcategories => {
-                const subcategoriesContainer = document.getElementById(`subcategories-${categoryId}`);
-                subcategories.forEach(sub => {
-                    const checkbox = document.createElement('div');
-                    checkbox.className = 'subcategory-checkbox';
-                    checkbox.innerHTML = `
-                        <input type="checkbox" id="sub-${sub.id}" value="${sub.id}">
-                        <label for="sub-${sub.id}">${sub.name}</label>
-                    `;
-                    subcategoriesContainer.appendChild(checkbox);
-                });
-            });
-    });
+let currentQuestions = [];
+let currentQuestionIndex = 0;
+let userAnswers = {};  // 사용자의 답안을 저장하는 객체
 
+// 페이지 로드 시 이벤트 리스너 설정
+document.addEventListener('DOMContentLoaded', function() {
+    // 사용자 통계 로드
+    loadUserStats();
+    
     // 문제 생성 버튼 클릭 이벤트
     document.getElementById('generate-questions').addEventListener('click', function() {
-        const selectedCategories = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
-            .map(checkbox => parseInt(checkbox.value));
+        const selectedCategories = Array.from(document.querySelectorAll('input[name="categories"]:checked'))
+            .map(cb => cb.value);
+        const numQuestions = document.getElementById('num-questions').value;
         
         if (selectedCategories.length === 0) {
             alert('최소 하나의 카테고리를 선택해주세요.');
             return;
         }
-
+        
+        // 서버에 문제 요청
         fetch('/get_random_questions', {
             method: 'POST',
             headers: {
@@ -66,55 +85,248 @@
             },
             body: JSON.stringify({
                 category_ids: selectedCategories,
-                num_questions: 5
+                num_questions: numQuestions
             })
         })
         .then(response => response.json())
-        .then(questions => {
-            const container = document.getElementById('questions-container');
-            container.innerHTML = '';
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
             
-            questions.forEach((q, index) => {
-                const questionCard = document.createElement('div');
-                questionCard.className = 'question-card';
-                questionCard.innerHTML = `
-                    <h3>문제 ${index + 1}</h3>
-                    <p class="question-text">${q.question_text}</p>
-                    <div class="options">
-                        ${[1, 2, 3, 4].map(num => `
-                            <div class="option">
-                                <input type="radio" name="q${q.id}" value="${num}" id="q${q.id}o${num}">
-                                <label for="q${q.id}o${num}">${q.options[num-1]}</label>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button class="check-answer" onclick="checkAnswer(${q.id}, ${q.correct_answer})">정답 확인</button>
-                    <div class="explanation" style="display: none;">
-                        <p><strong>정답: ${q.correct_answer}번</strong></p>
-                        <p>${q.explanation}</p>
-                    </div>
-                `;
-                container.appendChild(questionCard);
-            });
+            currentQuestions = data.questions;
+            currentQuestionIndex = 0;
+            userAnswers = {};  // 답안 초기화
+            
+            // 문제 컨테이너 표시
+            document.getElementById('questions-container').style.display = 'block';
+            
+            // 첫 번째 문제 표시
+            displayQuestion(currentQuestionIndex);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('문제를 가져오는 중 오류가 발생했습니다.');
         });
     });
-
-    // 정답 확인 함수
-    function checkAnswer(questionId, correctAnswer) {
-        const selectedAnswer = document.querySelector(`input[name="q${questionId}"]:checked`);
+    
+    // 정답 제출 버튼 클릭 이벤트
+    document.getElementById('submit-answer').addEventListener('click', function() {
+        const selectedAnswer = document.querySelector('input[name="answer"]:checked');
         if (!selectedAnswer) {
             alert('답을 선택해주세요.');
             return;
         }
-
-        const explanation = document.querySelector(`#q${questionId}`).nextElementSibling.nextElementSibling;
-        explanation.style.display = 'block';
         
-        if (parseInt(selectedAnswer.value) === correctAnswer) {
-            alert('정답입니다!');
+        const currentQuestion = currentQuestions[currentQuestionIndex];
+        const selectedAnswerValue = parseInt(selectedAnswer.value);
+        
+        // 서버에 답안 제출
+        fetch('/submit_answer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                question_id: currentQuestion.id,
+                selected_answer: selectedAnswerValue
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const isCorrect = data.is_correct;
+            
+            // 사용자 답안 저장
+            userAnswers[currentQuestionIndex] = {
+                selectedAnswer: selectedAnswerValue,
+                isCorrect: isCorrect,
+                correctAnswer: data.correct_answer,
+                explanation: data.explanation
+            };
+            
+            // 결과 표시
+            const questionDisplay = document.getElementById('question-display');
+            const options = questionDisplay.querySelectorAll('.option');
+            
+            options.forEach(option => {
+                const optionNumber = parseInt(option.dataset.option);
+                if (optionNumber === data.correct_answer) {
+                    option.classList.add('correct');
+                } else if (optionNumber === selectedAnswerValue) {
+                    option.classList.add('incorrect');
+                }
+            });
+            
+            // 해설 표시
+            const explanationDiv = document.createElement('div');
+            explanationDiv.className = 'explanation';
+            explanationDiv.innerHTML = `
+                <h3>${isCorrect ? '정답입니다!' : '오답입니다.'}</h3>
+                <p>${data.explanation}</p>
+            `;
+            questionDisplay.appendChild(explanationDiv);
+            
+            // 버튼 상태 변경
+            document.getElementById('submit-answer').style.display = 'none';
+            document.getElementById('next-question').style.display = 'inline-block';
+            
+            // 이전 문제 버튼 표시 (첫 번째 문제가 아닌 경우)
+            if (currentQuestionIndex > 0) {
+                document.getElementById('prev-question').style.display = 'inline-block';
+            }
+            
+            // 사용자 통계 업데이트
+            loadUserStats();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('답안을 제출하는 중 오류가 발생했습니다.');
+        });
+    });
+    
+    // 다음 문제 버튼 클릭 이벤트
+    document.getElementById('next-question').addEventListener('click', function() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < currentQuestions.length) {
+            displayQuestion(currentQuestionIndex);
         } else {
-            alert('틀렸습니다. 다시 시도해보세요.');
+            // 모든 문제를 풀었을 때
+            document.getElementById('questions-container').style.display = 'none';
+            alert('모든 문제를 풀었습니다!');
+        }
+    });
+    
+    // 이전 문제 버튼 클릭 이벤트
+    document.getElementById('prev-question').addEventListener('click', function() {
+        currentQuestionIndex--;
+        if (currentQuestionIndex >= 0) {
+            displayQuestion(currentQuestionIndex);
+        }
+    });
+});
+
+// 사용자 통계 로드 함수
+function loadUserStats() {
+    fetch('/get_user_stats')
+        .then(response => response.json())
+        .then(data => {
+            const statsContainer = document.querySelector('.stats-container');
+            const userStats = document.getElementById('user-stats');
+            
+            if (data.stats && data.stats.length > 0) {
+                userStats.style.display = 'block';
+                
+                let statsHTML = '<table class="stats-table">';
+                statsHTML += '<tr><th>카테고리</th><th>총 문제</th><th>정답</th><th>정답률</th></tr>';
+                
+                data.stats.forEach(stat => {
+                    statsHTML += `
+                        <tr>
+                            <td>${stat.category_name}</td>
+                            <td>${stat.total_questions}</td>
+                            <td>${stat.correct_answers}</td>
+                            <td>${stat.accuracy}%</td>
+                        </tr>
+                    `;
+                });
+                
+                statsHTML += '</table>';
+                statsContainer.innerHTML = statsHTML;
+            } else {
+                userStats.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+// 문제 표시 함수
+function displayQuestion(index) {
+    const question = currentQuestions[index];
+    const questionDisplay = document.getElementById('question-display');
+    
+    // 문제 번호 업데이트
+    document.getElementById('current-question').textContent = `문제 ${index + 1}`;
+    document.getElementById('total-questions').textContent = ` / ${currentQuestions.length}`;
+    
+    // 이전에 답안을 제출했는지 확인
+    const userAnswer = userAnswers[index];
+    
+    if (userAnswer) {
+        // 이전에 답안을 제출한 경우, 결과와 함께 표시
+        questionDisplay.innerHTML = `
+            <div class="question-text">${question.question_text}</div>
+            <div class="options">
+                <div class="option ${userAnswer.selectedAnswer === 1 ? (userAnswer.isCorrect ? 'correct' : 'incorrect') : (userAnswer.correctAnswer === 1 ? 'correct' : '')}" data-option="1">
+                    <input type="radio" id="option1" name="answer" value="1" ${userAnswer.selectedAnswer === 1 ? 'checked' : ''} disabled>
+                    <label for="option1">${question.option1}</label>
+                </div>
+                <div class="option ${userAnswer.selectedAnswer === 2 ? (userAnswer.isCorrect ? 'correct' : 'incorrect') : (userAnswer.correctAnswer === 2 ? 'correct' : '')}" data-option="2">
+                    <input type="radio" id="option2" name="answer" value="2" ${userAnswer.selectedAnswer === 2 ? 'checked' : ''} disabled>
+                    <label for="option2">${question.option2}</label>
+                </div>
+                <div class="option ${userAnswer.selectedAnswer === 3 ? (userAnswer.isCorrect ? 'correct' : 'incorrect') : (userAnswer.correctAnswer === 3 ? 'correct' : '')}" data-option="3">
+                    <input type="radio" id="option3" name="answer" value="3" ${userAnswer.selectedAnswer === 3 ? 'checked' : ''} disabled>
+                    <label for="option3">${question.option3}</label>
+                </div>
+                <div class="option ${userAnswer.selectedAnswer === 4 ? (userAnswer.isCorrect ? 'correct' : 'incorrect') : (userAnswer.correctAnswer === 4 ? 'correct' : '')}" data-option="4">
+                    <input type="radio" id="option4" name="answer" value="4" ${userAnswer.selectedAnswer === 4 ? 'checked' : ''} disabled>
+                    <label for="option4">${question.option4}</label>
+                </div>
+            </div>
+            <div class="explanation">
+                <h3>${userAnswer.isCorrect ? '정답입니다!' : '오답입니다.'}</h3>
+                <p>${userAnswer.explanation}</p>
+            </div>
+        `;
+        
+        // 버튼 상태 설정
+        document.getElementById('submit-answer').style.display = 'none';
+        document.getElementById('next-question').style.display = 'inline-block';
+        
+        // 이전 문제 버튼 표시 (첫 번째 문제가 아닌 경우)
+        if (index > 0) {
+            document.getElementById('prev-question').style.display = 'inline-block';
+        } else {
+            document.getElementById('prev-question').style.display = 'none';
+        }
+    } else {
+        // 새로운 문제 표시
+        questionDisplay.innerHTML = `
+            <div class="question-text">${question.question_text}</div>
+            <div class="options">
+                <div class="option" data-option="1">
+                    <input type="radio" id="option1" name="answer" value="1">
+                    <label for="option1">${question.option1}</label>
+                </div>
+                <div class="option" data-option="2">
+                    <input type="radio" id="option2" name="answer" value="2">
+                    <label for="option2">${question.option2}</label>
+                </div>
+                <div class="option" data-option="3">
+                    <input type="radio" id="option3" name="answer" value="3">
+                    <label for="option3">${question.option3}</label>
+                </div>
+                <div class="option" data-option="4">
+                    <input type="radio" id="option4" name="answer" value="4">
+                    <label for="option4">${question.option4}</label>
+                </div>
+            </div>
+        `;
+        
+        // 버튼 상태 초기화
+        document.getElementById('submit-answer').style.display = 'inline-block';
+        document.getElementById('next-question').style.display = 'none';
+        
+        // 이전 문제 버튼 표시 (첫 번째 문제가 아닌 경우)
+        if (index > 0) {
+            document.getElementById('prev-question').style.display = 'inline-block';
+        } else {
+            document.getElementById('prev-question').style.display = 'none';
         }
     }
+}
 </script>
 {% endblock %} 

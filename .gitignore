@@ -35,8 +35,12 @@ ENV/
 *.db
 *.sqlite3
 
+# Logs
+*.log
+
 # Environment variables
 .env
 
-# Logs
-*.log 
+# OS
+.DS_Store
+Thumbs.db 

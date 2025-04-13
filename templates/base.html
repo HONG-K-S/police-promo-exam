@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}경찰 승진 시험 문제 은행{% endblock %}</title>
+    <title>{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         /* 상단 고정 바 스타일 */
@@ -170,58 +170,52 @@
     {% block head %}{% endblock %}
 </head>
 <body>
-    <!-- 상단 고정 바 -->
-    <div class="top-bar">
-        <div class="nav-buttons">
-            <button class="nav-button" onclick="history.back()">←</button>
-            <button class="nav-button" onclick="history.forward()">→</button>
+    <header>
+        <div class="header-container">
+            <div class="header-left">
+                <a href="javascript:history.back()" class="header-btn">이전</a>
+            </div>
+            <div class="header-center">
+                <h1>{% block header %}{% endblock %}</h1>
+            </div>
+            <div class="header-right">
+                <a href="#" id="home-btn" class="header-btn home-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L2 8.207V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V8.207l.646.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V7.207l5-5 5 5Z"/>
+                    </svg>
+                </a>
+                <a href="{{ url_for('logout') }}" class="header-btn">로그아웃</a>
+            </div>
         </div>
-        <div class="current-time" id="current-time">
-            <p>현재 시간</p>
-        </div>
-        <div class="user-info">
-            <span class="username">{{ session.get('admin_username', '') }}</span>
-            <a href="{{ url_for('logout') }}" class="logout-button">로그아웃</a>
-        </div>
-    </div>
+    </header>
 
     <div class="container">
         {% block content %}{% endblock %}
     </div>
 
-    <!-- 하단 고정 바 -->
-    <div class="bottom-bar">
-        <div class="bottom-time" id="bottom-time">
-            <p>현재 시간</p>
-        </div>
-        <div class="copyright">
-            <p>&copy; 홍기석이 만든 경찰 승진 시험 문제 은행. All rights reserved.</p>
-        </div>
+    <div class="footer-bar">
+        <p>&copy; 홍기석이 만든 경찰 승진 시험 문제 은행</p>
     </div>
 
     <script>
-        // 현재 시간 표시 함수
-        function updateCurrentTime() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
+        // 홈 버튼 클릭 이벤트 처리
+        document.getElementById('home-btn').addEventListener('click', function(e) {
+            e.preventDefault();
             
-            const timeText = `현재 시간: ${year}. ${month}. ${day}. ${hours}:${minutes}:${seconds}`;
-            document.getElementById('current-time').textContent = timeText;
-            document.getElementById('bottom-time').textContent = timeText;
-        }
-
-        // 페이지 로드 시 실행
-        document.addEventListener('DOMContentLoaded', function() {
-            // 현재 시간 표시 및 1초마다 업데이트
-            updateCurrentTime();
-            setInterval(updateCurrentTime, 1000);
+            // 문제 풀이 중인지 확인
+            const questionsContainer = document.getElementById('questions-container');
+            if (questionsContainer && questionsContainer.style.display !== 'none') {
+                // 경고창 표시
+                if (confirm('문제 풀이를 중단하고 홈 화면으로 돌아가시겠습니까? 현재까지의 답안은 저장되지 않습니다.')) {
+                    window.location.href = "{{ url_for('home') }}";
+                }
+            } else {
+                // 문제 풀이 중이 아니면 바로 홈으로 이동
+                window.location.href = "{{ url_for('home') }}";
+            }
         });
     </script>
+    
     {% block scripts %}{% endblock %}
 </body>
 </html> 

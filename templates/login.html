@@ -5,9 +5,15 @@
 {% block content %}
 <div class="login-container">
     <h1>로그인</h1>
-    {% if error %}
-    <div class="error-message">{{ error }}</div>
-    {% endif %}
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
     <form method="POST" action="{{ url_for('login') }}">
         <div class="form-group">
             <label for="username">아이디</label>
