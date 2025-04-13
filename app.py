@@ -16,8 +16,8 @@ from models import Category, Question, Admin, User, AnswerRecord
 app = Flask(__name__)
 
 # 애플리케이션 설정
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev_key_for_development')  # 세션 암호화를 위한 비밀키
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///questions.db'
+app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///police_promo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 데이터베이스 초기화
@@ -44,8 +44,8 @@ def home():
     모든 상위 카테고리(경찰실무종합, 형법, 형사소송법)를 가져와서 템플릿에 전달합니다.
     로그인이 필요합니다.
     """
-    main_categories = Category.query.filter_by(parent_id=None).all()  # 상위 카테고리만 가져옴
-    return render_template('index.html', categories=main_categories)  # HTML 템플릿 렌더링
+    categories = Category.query.filter_by(parent_id=None).all()
+    return render_template('index.html', categories=categories)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -94,88 +94,27 @@ def get_random_questions():
     클라이언트로부터 POST 요청을 받아 처리합니다.
     로그인이 필요합니다.
     """
-    data = request.get_json()  # 클라이언트로부터 받은 JSON 데이터
-    category_ids = data.get('category_ids', [])  # 선택된 카테고리 ID들
-    num_questions = data.get('num_questions', 5)  # 요청된 문제 수
+    data = request.get_json()
+    selected_categories = data.get('categories', [])
+    num_questions = int(data.get('num_questions', 5))
     
-    # 선택된 카테고리들의 모든 하위 카테고리 ID 가져오기
-    all_category_ids = set(category_ids)  # 중복 제거를 위해 set 사용
-    for cat_id in category_ids:
-        category = Category.query.get(cat_id)
+    questions = []
+    for category_id in selected_categories:
+        category = Category.query.get(category_id)
         if category:
-            for child in category.children:
-                all_category_ids.add(child.id)
+            subcategories = Category.query.filter_by(parent_id=category_id).all()
+            for subcategory in subcategories:
+                questions.extend(Question.query.filter_by(category_id=subcategory.id).all())
     
-    # 무작위로 문제 선택
-    questions = Question.query.filter(Question.category_id.in_(all_category_ids)).all()
-    
-    if not questions:
-        return jsonify({'error': '선택된 카테고리에 문제가 없습니다.'}), 404
-    
-    # 요청된 수만큼 무작위로 문제 선택
     selected_questions = random.sample(questions, min(num_questions, len(questions)))
-    
-    # 각 문제에 대해 무작위로 하위 카테고리 선택
-    for question in selected_questions:
-        category = Category.query.get(question.category_id)
-        if category and category.parent:
-            # 1차 하위 카테고리 선택
-            first_level_subcategories = [c for c in category.parent.children if c.id != category.id]
-            if first_level_subcategories:
-                first_level = random.choice(first_level_subcategories)
-                
-                # 최종 하위 카테고리 찾기 (더 이상 하위 카테고리가 없는 카테고리)
-                final_category = first_level
-                category_path = [first_level.name]  # 카테고리 경로 저장
-                while final_category.children:
-                    final_category = random.choice(final_category.children)
-                    category_path.append(final_category.name)
-                
-                # 상위 카테고리 이름 가져오기
-                main_category = category.parent.name
-                
-                # 카테고리 경로를 대괄호로 구분하여 문자열 생성
-                category_path_str = ''.join(f'[{cat}]' for cat in [main_category] + category_path)
-                
-                # 문제 텍스트 생성
-                question.question_text = f"{category_path_str}에 대한 설명 중 옳은 것은?"
-                
-                # 무작위로 4개의 옵션 선택
-                all_options = [c.name for c in final_category.children]
-                if len(all_options) >= 4:
-                    selected_options = random.sample(all_options, 4)
-                    
-                    # 정답과 오답 구분
-                    correct_options = [opt for opt in selected_options if opt in [c.name for c in final_category.children if c.is_correct]]
-                    wrong_options = [opt for opt in selected_options if opt not in correct_options]
-                    
-                    if correct_options and wrong_options:
-                        # 정답과 오답을 무작위로 섞어서 옵션으로 설정
-                        question.option1 = selected_options[0]
-                        question.option2 = selected_options[1]
-                        question.option3 = selected_options[2]
-                        question.option4 = selected_options[3]
-                        
-                        # 정답 설정
-                        question.correct_answer = selected_options.index(correct_options[0]) + 1
-                        
-                        # 해설 설정
-                        question.explanation = f"{category_path_str}에 대한 설명 중 '{correct_options[0]}'이(가) 옳은 설명입니다."
-    
-    # 문제 데이터를 JSON 형식으로 변환
-    questions_data = [{
+    return jsonify([{
         'id': q.id,
-        'question_text': q.question_text,
-        'option1': q.option1,
-        'option2': q.option2,
-        'option3': q.option3,
-        'option4': q.option4,
+        'title': q.title,
+        'question_type': q.question_type,
+        'statements': q.statements,
         'correct_answer': q.correct_answer,
-        'explanation': q.explanation,
-        'category_id': q.category_id
-    } for q in selected_questions]
-    
-    return jsonify({'questions': questions_data})
+        'explanation': q.explanation
+    } for q in selected_questions])
 
 @app.route('/submit_answer', methods=['POST'])
 @login_required
@@ -247,22 +186,17 @@ def get_user_stats():
     
     return jsonify({'stats': result})
 
-@app.route('/get_subcategories', methods=['GET'])
+@app.route('/get_subcategories/<int:category_id>')
 @login_required
-def get_subcategories():
+def get_subcategories(category_id):
     """
     선택된 카테고리의 하위 카테고리를 가져오는 함수입니다.
     """
-    category_id = request.args.get('category_id')
-    if not category_id:
-        return jsonify({'error': '카테고리 ID가 필요합니다.'}), 400
-    
-    category = Category.query.get(category_id)
-    if not category:
-        return jsonify({'error': '카테고리를 찾을 수 없습니다.'}), 404
-    
-    subcategories = [{'id': c.id, 'name': c.name} for c in category.children]
-    return jsonify({'subcategories': subcategories})
+    subcategories = Category.query.filter_by(parent_id=category_id).all()
+    return jsonify([{
+        'id': c.id,
+        'name': c.name
+    } for c in subcategories])
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -414,30 +348,44 @@ def init_db():
     with app.app_context():
         db.create_all()  # 데이터베이스 테이블 생성
         
-        # 초기 카테고리 데이터 추가
-        if not Category.query.first():  # 카테고리가 하나도 없을 때만 실행
-            # 메인 카테고리 추가
-            police_practice = Category(name='경찰실무종합')
-            criminal_law = Category(name='형법')
-            criminal_procedure = Category(name='형사소송법')
-            
-            db.session.add_all([police_practice, criminal_law, criminal_procedure])
+        # 기본 카테고리 추가
+        if not Category.query.first():
+            # 경찰학
+            police = Category(name='경찰학')
+            db.session.add(police)
             db.session.commit()
             
-            # 예시 하위 카테고리 추가
-            subcategories = [
-                (police_practice.id, '경찰조직법'),
-                (police_practice.id, '경찰공무원법'),
-                (criminal_law.id, '총칙'),
-                (criminal_law.id, '각칙'),
-                (criminal_procedure.id, '총칙'),
-                (criminal_procedure.id, '수사'),
-                (criminal_procedure.id, '공소')
-            ]
+            police_org = Category(name='경찰조직법', parent_id=police.id)
+            police_emp = Category(name='경찰공무원법', parent_id=police.id)
+            police_tech = Category(name='경찰기술', parent_id=police.id)
+            db.session.add_all([police_org, police_emp, police_tech])
             
-            for parent_id, name in subcategories:
-                subcategory = Category(name=name, parent_id=parent_id)
-                db.session.add(subcategory)
+            # 형법
+            criminal = Category(name='형법')
+            db.session.add(criminal)
+            db.session.commit()
+            
+            criminal_gen = Category(name='형법총칙', parent_id=criminal.id)
+            criminal_sp = Category(name='형법각칙', parent_id=criminal.id)
+            db.session.add_all([criminal_gen, criminal_sp])
+            
+            # 형사소송법
+            criminal_proc = Category(name='형사소송법')
+            db.session.add(criminal_proc)
+            db.session.commit()
+            
+            investigation = Category(name='수사', parent_id=criminal_proc.id)
+            evidence = Category(name='증거', parent_id=criminal_proc.id)
+            trial = Category(name='재판', parent_id=criminal_proc.id)
+            db.session.add_all([investigation, evidence, trial])
+            
+            # 기타 법령
+            other = Category(name='기타 법령')
+            db.session.add(other)
+            db.session.commit()
+            
+            constitution = Category(name='헌법', parent_id=other.id)
+            db.session.add(constitution)
             
             db.session.commit()
         

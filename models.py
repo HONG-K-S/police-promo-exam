@@ -76,22 +76,18 @@ class Category(db.Model):
     answer_records = db.relationship('AnswerRecord', backref='category', lazy=True)
 
 class Question(db.Model):
-    """
-    문제를 관리하는 모델입니다.
-    """
+    """문제 모델"""
     id = db.Column(db.Integer, primary_key=True)
-    question_text = db.Column(db.Text, nullable=False)
-    option1 = db.Column(db.String(200), nullable=False)
-    option2 = db.Column(db.String(200), nullable=False)
-    option3 = db.Column(db.String(200), nullable=False)
-    option4 = db.Column(db.String(200), nullable=False)
-    correct_answer = db.Column(db.Integer, nullable=False)  # 1~4 사이의 값
-    explanation = db.Column(db.Text)
+    title = db.Column(db.Text, nullable=False)  # 문제 제목 (카테고리 경로 포함)
+    question_type = db.Column(db.String(20), nullable=False)  # 'correct' 또는 'incorrect' (옳은 것/틀린 것 고르기)
+    statements = db.Column(db.JSON, nullable=False)  # 지문들을 JSON으로 저장
+    correct_answer = db.Column(db.Integer, nullable=False)  # 정답 번호 (1~4)
+    explanation = db.Column(db.Text, nullable=False)  # 해설
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # 답안 기록과의 관계 설정
-    answer_records = db.relationship('AnswerRecord', backref='question', lazy=True)
+
+    def __repr__(self):
+        return f'<Question {self.id}>'
 
 class AnswerRecord(db.Model):
     """

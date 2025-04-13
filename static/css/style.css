@@ -195,22 +195,71 @@ header h1 {
 
 /* 문제 카드 스타일 */
 .question-card {
-    background: white;
-    padding: 15px;
+    background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+    padding: 20px;
 }
 
-.question-card h3 {
-    margin: 0 0 10px;
+.question-title {
     color: var(--primary-color);
-    font-size: 16px;
+    margin-bottom: 20px;
+    font-size: 1.2em;
 }
 
-.question-text {
-    font-size: 14px;
-    margin-bottom: 15px;
+.statements {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.statement {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    transition: background-color 0.3s;
+}
+
+.statement:hover {
+    background-color: #e9ecef;
+}
+
+.statement input[type="radio"] {
+    margin-top: 4px;
+}
+
+.statement label {
+    flex-grow: 1;
+    cursor: pointer;
+}
+
+.statement.correct {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.statement.incorrect {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.question-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.explanation {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid var(--primary-color);
 }
 
 /* 버튼 스타일 */
@@ -335,8 +384,16 @@ header h1 {
         font-size: 14px;
     }
 
-    .question-text {
-        font-size: 12px;
+    .question-card {
+        padding: 15px;
+    }
+
+    .question-title {
+        font-size: 1.1em;
+    }
+
+    .statement {
+        padding: 8px;
     }
 
     .primary-button {
