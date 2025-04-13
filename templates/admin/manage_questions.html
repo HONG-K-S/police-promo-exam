@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}문제 관리{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>문제 관리</h1>
+    
+    <!-- 문제 검색 폼 -->
+    <div class="search-form">
+        <form method="GET" action="{{ url_for('admin_manage_questions') }}">
+            <div class="form-group">
+                <input type="text" name="search" class="form-control" placeholder="문제 검색..." value="{{ search_query }}">
+            </div>
+            <div class="form-group">
+                <select name="category" class="form-control">
+                    <option value="">모든 카테고리</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">검색</button>
+        </form>
+    </div>
+
+    <!-- 문제 추가 버튼 -->
+    <div class="add-question">
+        <a href="{{ url_for('admin_add_question') }}" class="btn btn-success">새 문제 추가</a>
+    </div>
+
+    <!-- 문제 목록 -->
+    <div class="questions-list">
+        {% for question in questions %}
+        <div class="question-card">
+            <div class="question-header">
+                <h3>{{ question.title }}</h3>
+                <div class="question-actions">
+                    <a href="{{ url_for('admin_edit_question', question_id=question.id) }}" class="btn btn-sm btn-primary">수정</a>
+                    <button onclick="deleteQuestion({{ question.id }})" class="btn btn-sm btn-danger">삭제</button>
+                </div>
+            </div>
+            <div class="question-content">
+                <p><strong>카테고리:</strong> {{ question.category.name }}</p>
+                <p><strong>문제 유형:</strong> {{ '옳은 것 고르기' if question.question_type == 'correct' else '틀린 것 고르기' }}</p>
+                <div class="statements">
+                    {% for statement in question.statements %}
+                    <p class="statement {% if loop.index == question.correct_answer %}correct{% endif %}">
+                        {{ loop.index }}. {{ statement }}
+                    </p>
+                    {% endfor %}
+                </div>
+                <p><strong>해설:</strong> {{ question.explanation }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- 페이지네이션 -->
+    <div class="pagination">
+        {% if pagination.has_prev %}
+        <a href="{{ url_for('admin_manage_questions', page=pagination.prev_num, search=search_query, category=selected_category) }}" class="btn btn-secondary">&laquo; 이전</a>
+        {% endif %}
+        
+        <span class="current-page">페이지 {{ pagination.page }} / {{ pagination.pages }}</span>
+        
+        {% if pagination.has_next %}
+        <a href="{{ url_for('admin_manage_questions', page=pagination.next_num, search=search_query, category=selected_category) }}" class="btn btn-secondary">다음 &raquo;</a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function deleteQuestion(questionId) {
+    if (confirm('정말로 이 문제를 삭제하시겠습니까?')) {
+        fetch(`/admin/questions/${questionId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('문제 삭제 중 오류가 발생했습니다.');
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

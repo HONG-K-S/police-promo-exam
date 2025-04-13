@@ -1,15 +1,13 @@
 # Flask 웹 애플리케이션의 메인 파일입니다.
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
-import os  # 운영체제 관련 기능을 사용하기 위한 모듈
-import random  # 무작위 선택을 위한 파이썬 기본 라이브러리
-from functools import wraps  # 데코레이터를 위한 파이썬 기본 라이브러리
-from datetime import datetime
+import os
+import random
+from functools import wraps
+from datetime import datetime, timedelta
 
 # 데이터베이스 설정과 모델 가져오기
-from database import db, init_app
+from database import db, init_app, init_db
 from models import Category, Question, Admin, User, AnswerRecord
 
 # Flask 애플리케이션 생성
@@ -17,8 +15,6 @@ app = Flask(__name__)
 
 # 애플리케이션 설정
 app.config['SECRET_KEY'] = os.urandom(24)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///police_promo.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 데이터베이스 초기화
 init_app(app)
@@ -234,29 +230,85 @@ def register():
 
     return render_template('register.html')
 
-@app.route('/profile', methods=['GET', 'POST'])
+@app.route('/profile')
 @login_required
 def profile():
-    """
-    사용자 프로필 정보를 보여주고 수정하는 페이지입니다.
-    """
-    if request.method == 'POST':
-        user = User.query.get(current_user.id)
-        if user:
-            user.name = request.form.get('name')
-            user.rank = request.form.get('rank')
-            user.department = request.form.get('department')
-            
-            # 비밀번호 변경이 요청된 경우
-            new_password = request.form.get('new_password')
-            if new_password:
-                user.set_password(new_password)
-            
-            db.session.commit()
-            flash('프로필이 성공적으로 업데이트되었습니다.', 'success')
-            return redirect(url_for('profile'))
+    """사용자 프로필 페이지"""
+    # 사용자의 학습 통계 계산
+    stats = {
+        'total_questions': Question.query.count(),
+        'correct_rate': 75.5,  # 임시 데이터, 실제로는 사용자의 답안 기록에서 계산
+        'study_time': 12,  # 임시 데이터, 실제로는 학습 시간 기록에서 계산
+        'category_stats': [
+            {'name': '경찰학', 'correct_rate': 80},
+            {'name': '형법', 'correct_rate': 70},
+            {'name': '형사소송법', 'correct_rate': 75},
+            {'name': '기타 법령', 'correct_rate': 85}
+        ]
+    }
     
-    return render_template('profile.html')
+    # 최근 학습 활동 (임시 데이터)
+    recent_activities = [
+        {
+            'created_at': datetime.now() - timedelta(days=1),
+            'description': '경찰학 문제 10개 풀기 완료',
+            'category': Category.query.filter_by(name='경찰학').first()
+        },
+        {
+            'created_at': datetime.now() - timedelta(days=2),
+            'description': '형법 문제 5개 풀기 완료',
+            'category': Category.query.filter_by(name='형법').first()
+        }
+    ]
+    
+    return render_template('user/profile.html',
+                         user=current_user,
+                         stats=stats,
+                         recent_activities=recent_activities)
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    """프로필 수정"""
+    if request.method == 'POST':
+        # 폼 데이터로 사용자 정보 업데이트
+        current_user.name = request.form.get('name')
+        current_user.rank = request.form.get('rank')
+        current_user.department = request.form.get('department')
+        current_user.email = request.form.get('email')
+        current_user.phone = request.form.get('phone')
+        
+        db.session.commit()
+        
+        flash('프로필이 성공적으로 수정되었습니다.', 'success')
+        return redirect(url_for('profile'))
+    
+    return render_template('user/edit_profile.html', user=current_user)
+
+@app.route('/profile/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    """비밀번호 변경"""
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not current_user.check_password(current_password):
+            flash('현재 비밀번호가 일치하지 않습니다.', 'error')
+            return redirect(url_for('change_password'))
+        
+        if new_password != confirm_password:
+            flash('새 비밀번호가 일치하지 않습니다.', 'error')
+            return redirect(url_for('change_password'))
+        
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        flash('비밀번호가 성공적으로 변경되었습니다.', 'success')
+        return redirect(url_for('profile'))
+    
+    return render_template('user/change_password.html')
 
 @app.route('/admin/users')
 def admin_users():
@@ -341,85 +393,158 @@ def admin_dashboard():
     
     return render_template('admin/dashboard.html')
 
+@app.route('/admin/questions')
+@login_required
+@admin_required
+def admin_manage_questions():
+    """문제 관리 페이지"""
+    page = request.args.get('page', 1, type=int)
+    search_query = request.args.get('search', '')
+    selected_category = request.args.get('category', type=int)
+    
+    # 문제 쿼리 생성
+    query = Question.query
+    
+    # 검색어가 있는 경우
+    if search_query:
+        query = query.filter(
+            db.or_(
+                Question.title.ilike(f'%{search_query}%'),
+                Question.explanation.ilike(f'%{search_query}%')
+            )
+        )
+    
+    # 카테고리 필터
+    if selected_category:
+        query = query.filter_by(category_id=selected_category)
+    
+    # 페이지네이션
+    pagination = query.order_by(Question.created_at.desc()).paginate(
+        page=page, per_page=10, error_out=False
+    )
+    
+    return render_template('admin/manage_questions.html',
+                         questions=pagination.items,
+                         pagination=pagination,
+                         categories=Category.query.all(),
+                         search_query=search_query,
+                         selected_category=selected_category)
+
+@app.route('/admin/questions/add', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_add_question():
+    """문제 추가"""
+    if request.method == 'POST':
+        # 폼 데이터 가져오기
+        category_id = request.form.get('category_id')
+        title = request.form.get('title')
+        question_type = request.form.get('question_type')
+        statements = request.form.getlist('statements[]')
+        correct_answer = int(request.form.get('correct_answer'))
+        explanation = request.form.get('explanation')
+        
+        # 새 문제 생성
+        question = Question(
+            category_id=category_id,
+            title=title,
+            question_type=question_type,
+            statements=statements,
+            correct_answer=correct_answer,
+            explanation=explanation
+        )
+        
+        db.session.add(question)
+        db.session.commit()
+        
+        flash('문제가 성공적으로 추가되었습니다.', 'success')
+        return redirect(url_for('admin_manage_questions'))
+    
+    return render_template('admin/question_form.html',
+                         categories=Category.query.all())
+
+@app.route('/admin/questions/<int:question_id>/edit', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_edit_question(question_id):
+    """문제 수정"""
+    question = Question.query.get_or_404(question_id)
+    
+    if request.method == 'POST':
+        # 폼 데이터로 문제 업데이트
+        question.category_id = request.form.get('category_id')
+        question.title = request.form.get('title')
+        question.question_type = request.form.get('question_type')
+        question.statements = request.form.getlist('statements[]')
+        question.correct_answer = int(request.form.get('correct_answer'))
+        question.explanation = request.form.get('explanation')
+        
+        db.session.commit()
+        
+        flash('문제가 성공적으로 수정되었습니다.', 'success')
+        return redirect(url_for('admin_manage_questions'))
+    
+    return render_template('admin/question_form.html',
+                         question=question,
+                         categories=Category.query.all())
+
+@app.route('/admin/questions/<int:question_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_question(question_id):
+    """문제 삭제"""
+    question = Question.query.get_or_404(question_id)
+    
+    db.session.delete(question)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
 def init_db():
-    """
-    데이터베이스를 초기화하고 기본 카테고리 데이터를 추가하는 함수입니다.
-    """
+    """데이터베이스 초기화 및 기본 데이터 추가"""
     with app.app_context():
-        db.create_all()  # 데이터베이스 테이블 생성
+        # 데이터베이스 테이블 생성
+        db.drop_all()  # 기존 테이블 삭제
+        db.create_all()  # 테이블 새로 생성
         
         # 기본 카테고리 추가
-        if not Category.query.first():
-            # 경찰학
-            police = Category(name='경찰학')
-            db.session.add(police)
-            db.session.commit()
-            
-            police_org = Category(name='경찰조직법', parent_id=police.id)
-            police_emp = Category(name='경찰공무원법', parent_id=police.id)
-            police_tech = Category(name='경찰기술', parent_id=police.id)
-            db.session.add_all([police_org, police_emp, police_tech])
-            
-            # 형법
-            criminal = Category(name='형법')
-            db.session.add(criminal)
-            db.session.commit()
-            
-            criminal_gen = Category(name='형법총칙', parent_id=criminal.id)
-            criminal_sp = Category(name='형법각칙', parent_id=criminal.id)
-            db.session.add_all([criminal_gen, criminal_sp])
-            
-            # 형사소송법
-            criminal_proc = Category(name='형사소송법')
-            db.session.add(criminal_proc)
-            db.session.commit()
-            
-            investigation = Category(name='수사', parent_id=criminal_proc.id)
-            evidence = Category(name='증거', parent_id=criminal_proc.id)
-            trial = Category(name='재판', parent_id=criminal_proc.id)
-            db.session.add_all([investigation, evidence, trial])
-            
-            # 기타 법령
-            other = Category(name='기타 법령')
-            db.session.add(other)
-            db.session.commit()
-            
-            constitution = Category(name='헌법', parent_id=other.id)
-            db.session.add(constitution)
-            
-            db.session.commit()
+        # 경찰학
+        police = Category(name='경찰학')
+        db.session.add(police)
+        db.session.commit()
         
-        # 기본 관리자 계정 생성
-        if not Admin.query.first():  # 관리자 계정이 하나도 없을 때만 실행
-            admin = Admin(username='admin')
-            admin.set_password('admin123')  # 기본 비밀번호 설정
-            db.session.add(admin)
-            db.session.commit()
-            print("기본 관리자 계정이 생성되었습니다. 아이디: admin, 비밀번호: admin123")
-            
-        # 사용자 계정 생성
-        if not User.query.filter_by(username='홍기석').first():
-            user1 = User(
-                username='홍기석',
-                name='홍기석',
-                rank='경사',
-                department='광주북부경찰서 용봉지구대'
-            )
-            user1.set_password('1234')
-            db.session.add(user1)
-            print("사용자 계정이 생성되었습니다. 아이디: 홍기석, 비밀번호: 1234")
-            
-        if not User.query.filter_by(username='이산하').first():
-            user2 = User(
-                username='이산하',
-                name='이산하',
-                rank='경위',
-                department='광주북부경찰서 용봉지구대'
-            )
-            user2.set_password('1234')
-            db.session.add(user2)
-            print("사용자 계정이 생성되었습니다. 아이디: 이산하, 비밀번호: 1234")
-            
+        police_org = Category(name='경찰조직법', parent_id=police.id)
+        police_emp = Category(name='경찰공무원법', parent_id=police.id)
+        police_tech = Category(name='경찰기술', parent_id=police.id)
+        db.session.add_all([police_org, police_emp, police_tech])
+        
+        # 형법
+        criminal = Category(name='형법')
+        db.session.add(criminal)
+        db.session.commit()
+        
+        criminal_gen = Category(name='형법총칙', parent_id=criminal.id)
+        criminal_sp = Category(name='형법각칙', parent_id=criminal.id)
+        db.session.add_all([criminal_gen, criminal_sp])
+        
+        # 형사소송법
+        criminal_proc = Category(name='형사소송법')
+        db.session.add(criminal_proc)
+        db.session.commit()
+        
+        investigation = Category(name='수사', parent_id=criminal_proc.id)
+        evidence = Category(name='증거', parent_id=criminal_proc.id)
+        trial = Category(name='재판', parent_id=criminal_proc.id)
+        db.session.add_all([investigation, evidence, trial])
+        
+        # 기타 법령
+        other = Category(name='기타 법령')
+        db.session.add(other)
+        db.session.commit()
+        
+        constitution = Category(name='헌법', parent_id=other.id)
+        db.session.add(constitution)
+        
         db.session.commit()
 
 # 프로그램이 직접 실행될 때만 실행되는 부분

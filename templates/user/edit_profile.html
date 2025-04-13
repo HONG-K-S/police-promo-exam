@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}프로필 수정{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="edit-profile-container">
+        <h1>프로필 수정</h1>
+        
+        <form method="POST" class="edit-profile-form">
+            <div class="form-group">
+                <label for="name">이름</label>
+                <input type="text" id="name" name="name" class="form-control" 
+                       value="{{ user.name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="rank">계급</label>
+                <select id="rank" name="rank" class="form-control" required>
+                    <option value="경장" {% if user.rank == '경장' %}selected{% endif %}>경장</option>
+                    <option value="서기" {% if user.rank == '서기' %}selected{% endif %}>서기</option>
+                    <option value="경사" {% if user.rank == '경사' %}selected{% endif %}>경사</option>
+                    <option value="경위" {% if user.rank == '경위' %}selected{% endif %}>경위</option>
+                    <option value="경감" {% if user.rank == '경감' %}selected{% endif %}>경감</option>
+                    <option value="경정" {% if user.rank == '경정' %}selected{% endif %}>경정</option>
+                    <option value="경무관" {% if user.rank == '경무관' %}selected{% endif %}>경무관</option>
+                    <option value="치안감" {% if user.rank == '치안감' %}selected{% endif %}>치안감</option>
+                    <option value="치안정감" {% if user.rank == '치안정감' %}selected{% endif %}>치안정감</option>
+                    <option value="치안총감" {% if user.rank == '치안총감' %}selected{% endif %}>치안총감</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="department">소속</label>
+                <input type="text" id="department" name="department" class="form-control" 
+                       value="{{ user.department }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" class="form-control" 
+                       value="{{ user.email or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">연락처</label>
+                <input type="tel" id="phone" name="phone" class="form-control" 
+                       value="{{ user.phone or '' }}">
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">저장</button>
+                <a href="{{ url_for('profile') }}" class="btn btn-secondary">취소</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.edit-profile-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.edit-profile-form {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-muted);
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 84, 166, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 30px;
+}
+</style>
+{% endblock %} 

@@ -10,8 +10,15 @@ def init_app(app):
     Flask 애플리케이션에 데이터베이스를 초기화하는 함수입니다.
     """
     # 데이터베이스 설정
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///app.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///police_promo.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # 데이터베이스 초기화
-    db.init_app(app) 
+    db.init_app(app)
+
+def init_db():
+    """
+    데이터베이스 테이블을 생성하는 함수입니다.
+    """
+    with app.app_context():
+        db.create_all() 

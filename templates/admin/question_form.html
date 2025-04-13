@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}{{ '문제 추가' if not question else '문제 수정' }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>{{ '문제 추가' if not question else '문제 수정' }}</h1>
+    
+    <form method="POST" class="question-form">
+        <div class="form-group">
+            <label for="category">카테고리</label>
+            <select name="category_id" id="category" class="form-control" required>
+                <option value="">카테고리 선택</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}" {% if question and question.category_id == category.id %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="title">문제 제목</label>
+            <input type="text" name="title" id="title" class="form-control" value="{{ question.title if question else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label for="question_type">문제 유형</label>
+            <select name="question_type" id="question_type" class="form-control" required>
+                <option value="correct" {% if question and question.question_type == 'correct' %}selected{% endif %}>옳은 것 고르기</option>
+                <option value="incorrect" {% if question and question.question_type == 'incorrect' %}selected{% endif %}>틀린 것 고르기</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>지문</label>
+            {% for i in range(4) %}
+            <div class="statement-input">
+                <input type="text" name="statements[]" class="form-control" 
+                       value="{{ question.statements[i] if question else '' }}" 
+                       placeholder="지문 {{ i + 1 }}" required>
+                <div class="correct-answer">
+                    <input type="radio" name="correct_answer" value="{{ i + 1 }}" 
+                           {% if question and question.correct_answer == i + 1 %}checked{% endif %} required>
+                    <label>정답</label>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label for="explanation">해설</label>
+            <textarea name="explanation" id="explanation" class="form-control" rows="3" required>{{ question.explanation if question else '' }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">저장</button>
+            <a href="{{ url_for('admin_manage_questions') }}" class="btn btn-secondary">취소</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.statement-input {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.statement-input input[type="text"] {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.correct-answer {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+</style>
+{% endblock %} 
