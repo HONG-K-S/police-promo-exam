@@ -1,0 +1,214 @@
+/* CSS 변수 정의 - 색상 테마 */
+:root {
+    --primary-color: #4a90e2;    /* 주요 강조색 - 파란색 */
+    --secondary-color: #2c3e50;  /* 보조 색상 - 진한 회색 */
+    --background-color: #f5f6fa; /* 배경색 - 연한 회색 */
+    --text-color: #2c3e50;      /* 텍스트 색상 */
+    --border-color: #dcdde1;    /* 테두리 색상 */
+    --success-color: #27ae60;   /* 성공/확인 버튼 색상 - 초록색 */
+    --error-color: #e74c3c;     /* 오류/경고 색상 - 빨간색 */
+}
+
+/* 모든 요소에 대한 기본 스타일 설정 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;  /* 요소의 크기 계산에 padding과 border를 포함 */
+}
+
+/* 기본 페이지 스타일 */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  /* 기본 폰트 설정 */
+    line-height: 1.6;  /* 줄 간격 */
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+/* 메인 컨테이너 스타일 */
+.container {
+    max-width: 1200px;  /* 최대 너비 */
+    margin: 0 auto;     /* 중앙 정렬 */
+    padding: 2rem;      /* 내부 여백 */
+}
+
+/* 헤더 스타일 */
+header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+/* 제목 스타일 */
+h1 {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+h2 {
+    color: var(--secondary-color);
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+}
+
+h3 {
+    color: var(--secondary-color);
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+}
+
+/* 카테고리 선택 섹션 스타일 */
+.category-selection {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;  /* 모서리 둥글게 */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);  /* 그림자 효과 */
+    margin-bottom: 2rem;
+}
+
+/* 카테고리 그리드 레이아웃 */
+.categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));  /* 반응형 그리드 */
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* 개별 카테고리 그룹 스타일 */
+.category-group {
+    background: var(--background-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+/* 하위 카테고리 그리드 레이아웃 */
+.subcategories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+/* 하위 카테고리 항목 스타일 */
+.subcategory {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* 컨트롤 섹션 스타일 */
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* 숫자 입력 필드 스타일 */
+input[type="number"] {
+    width: 80px;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+/* 버튼 기본 스타일 */
+button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;  /* 호버 효과를 위한 전환 */
+}
+
+/* 버튼 호버 효과 */
+button:hover {
+    background-color: #357abd;  /* 호버 시 더 어두운 파란색 */
+}
+
+/* 문제 카드 스타일 */
+.question {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+/* 문제 텍스트 스타일 */
+.question-text {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* 보기 옵션 그리드 레이아웃 */
+.options {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* 개별 보기 옵션 스타일 */
+.option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+/* 보기 옵션 호버 효과 */
+.option:hover {
+    background-color: var(--background-color);
+}
+
+/* 해설 섹션 스타일 */
+.explanation {
+    background-color: var(--background-color);
+    padding: 1rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+}
+
+/* 정답 확인 버튼 스타일 */
+.check-answer {
+    background-color: var(--success-color);
+}
+
+/* 푸터 스타일 */
+footer {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 1rem;
+    color: var(--secondary-color);
+}
+
+/* 모바일 화면 대응 스타일 */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    .categories {
+        grid-template-columns: 1fr;  /* 모바일에서는 한 열로 표시 */
+    }
+    
+    .controls {
+        flex-direction: column;  /* 모바일에서는 세로로 배치 */
+        align-items: stretch;
+    }
+    
+    button {
+        width: 100%;  /* 모바일에서는 버튼을 전체 너비로 */
+    }
+} 

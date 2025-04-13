@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}경찰 승진 시험 문제 은행{% endblock %}
+
+{% block content %}
+<header>
+    <h1>경찰 승진 시험 문제 은행</h1>
+</header>
+
+<main>
+    <section class="category-selection">
+        <h2>카테고리 선택</h2>
+        <div class="categories">
+            {% for category in categories %}
+            <div class="category-card" data-category-id="{{ category.id }}">
+                <h3>{{ category.name }}</h3>
+                <div class="subcategories" id="subcategories-{{ category.id }}"></div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="question-controls">
+        <button id="generate-questions" class="primary-button">문제 생성</button>
+    </section>
+
+    <section class="questions" id="questions-container"></section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 하위 카테고리 로드
+    document.querySelectorAll('.category-card').forEach(card => {
+        const categoryId = card.dataset.categoryId;
+        fetch(`/get_subcategories/${categoryId}`)
+            .then(response => response.json())
+            .then(subcategories => {
+                const subcategoriesContainer = document.getElementById(`subcategories-${categoryId}`);
+                subcategories.forEach(sub => {
+                    const checkbox = document.createElement('div');
+                    checkbox.className = 'subcategory-checkbox';
+                    checkbox.innerHTML = `
+                        <input type="checkbox" id="sub-${sub.id}" value="${sub.id}">
+                        <label for="sub-${sub.id}">${sub.name}</label>
+                    `;
+                    subcategoriesContainer.appendChild(checkbox);
+                });
+            });
+    });
+
+    // 문제 생성 버튼 클릭 이벤트
+    document.getElementById('generate-questions').addEventListener('click', function() {
+        const selectedCategories = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(checkbox => parseInt(checkbox.value));
+        
+        if (selectedCategories.length === 0) {
+            alert('최소 하나의 카테고리를 선택해주세요.');
+            return;
+        }
+
+        fetch('/get_random_questions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                category_ids: selectedCategories,
+                num_questions: 5
+            })
+        })
+        .then(response => response.json())
+        .then(questions => {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+            
+            questions.forEach((q, index) => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+                questionCard.innerHTML = `
+                    <h3>문제 ${index + 1}</h3>
+                    <p class="question-text">${q.question_text}</p>
+                    <div class="options">
+                        ${[1, 2, 3, 4].map(num => `
+                            <div class="option">
+                                <input type="radio" name="q${q.id}" value="${num}" id="q${q.id}o${num}">
+                                <label for="q${q.id}o${num}">${q.options[num-1]}</label>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="check-answer" onclick="checkAnswer(${q.id}, ${q.correct_answer})">정답 확인</button>
+                    <div class="explanation" style="display: none;">
+                        <p><strong>정답: ${q.correct_answer}번</strong></p>
+                        <p>${q.explanation}</p>
+                    </div>
+                `;
+                container.appendChild(questionCard);
+            });
+        });
+    });
+
+    // 정답 확인 함수
+    function checkAnswer(questionId, correctAnswer) {
+        const selectedAnswer = document.querySelector(`input[name="q${questionId}"]:checked`);
+        if (!selectedAnswer) {
+            alert('답을 선택해주세요.');
+            return;
+        }
+
+        const explanation = document.querySelector(`#q${questionId}`).nextElementSibling.nextElementSibling;
+        explanation.style.display = 'block';
+        
+        if (parseInt(selectedAnswer.value) === correctAnswer) {
+            alert('정답입니다!');
+        } else {
+            alert('틀렸습니다. 다시 시도해보세요.');
+        }
+    }
+</script>
+{% endblock %} 

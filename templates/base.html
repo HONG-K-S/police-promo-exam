@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}경찰 승진 시험 문제 은행{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* 상단 고정 바 스타일 */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;  /* 높이 줄임 */
+            background-color: #0054a6;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-button {
+            background-color: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 16px;  /* 폰트 크기 줄임 */
+            cursor: pointer;
+            padding: 3px 8px;  /* 패딩 줄임 */
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .nav-button:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        .current-time {
+            font-size: 14px;  /* 폰트 크기 줄임 */
+            font-weight: 500;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .username {
+            font-weight: 500;
+            font-size: 14px;  /* 폰트 크기 줄임 */
+        }
+
+        .logout-button {
+            background-color: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 3px 12px;  /* 패딩 줄임 */
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;  /* 폰트 크기 줄임 */
+        }
+
+        .logout-button:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        /* 하단 고정 바 스타일 */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background-color: #0054a6;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            font-size: 12px;
+        }
+
+        .bottom-time {
+            font-weight: 500;
+        }
+
+        .copyright {
+            font-weight: 500;
+        }
+
+        /* 메인 컨텐츠 영역 조정 */
+        .container {
+            margin-top: 60px;  /* 상단 바 높이 + 여백 */
+            margin-bottom: 40px;  /* 하단 바 높이 + 여백 */
+        }
+
+        /* 로그인 페이지 스타일 */
+        .login-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+
+        .login-container h1 {
+            color: #0054a6;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .login-button {
+            background-color: #0054a6;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        .login-button:hover {
+            background-color: #004080;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- 상단 고정 바 -->
+    <div class="top-bar">
+        <div class="nav-buttons">
+            <button class="nav-button" onclick="history.back()">←</button>
+            <button class="nav-button" onclick="history.forward()">→</button>
+        </div>
+        <div class="current-time" id="current-time">
+            <p>현재 시간</p>
+        </div>
+        <div class="user-info">
+            <span class="username">{{ session.get('admin_username', '') }}</span>
+            <a href="{{ url_for('logout') }}" class="logout-button">로그아웃</a>
+        </div>
+    </div>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- 하단 고정 바 -->
+    <div class="bottom-bar">
+        <div class="bottom-time" id="bottom-time">
+            <p>현재 시간</p>
+        </div>
+        <div class="copyright">
+            <p>&copy; 홍기석이 만든 경찰 승진 시험 문제 은행. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        // 현재 시간 표시 함수
+        function updateCurrentTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            const timeText = `현재 시간: ${year}. ${month}. ${day}. ${hours}:${minutes}:${seconds}`;
+            document.getElementById('current-time').textContent = timeText;
+            document.getElementById('bottom-time').textContent = timeText;
+        }
+
+        // 페이지 로드 시 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            // 현재 시간 표시 및 1초마다 업데이트
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html> 
