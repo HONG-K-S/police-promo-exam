@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+
+{% block title %}문제 재학습{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="review-header">
+        <h1>문제 재학습</h1>
+        <div class="breadcrumb">
+            <a href="{{ url_for('home') }}">홈</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="{{ url_for('wrong_notes') }}">오답 노트</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>문제 재학습</span>
+        </div>
+    </div>
+
+    <div class="question-section">
+        <div class="question-card">
+            <div class="question-header">
+                <div class="question-category">
+                    <span class="category-badge">{{ category.name }}</span>
+                </div>
+                {% if record %}
+                <div class="question-status">
+                    {% if record.is_correct %}
+                    <span class="status-badge correct-badge">
+                        <i class="fas fa-check-circle"></i> 이전 답안: 정답
+                    </span>
+                    {% else %}
+                    <span class="status-badge incorrect-badge">
+                        <i class="fas fa-times-circle"></i> 이전 답안: 오답
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="question-content">
+                <h2>{{ question.title }}</h2>
+                
+                <div class="statements">
+                    {% set statements = question.statements|from_json %}
+                    {% for statement in statements %}
+                    <div class="statement">
+                        <input type="radio" id="option-{{ loop.index0 }}" name="answer" value="{{ loop.index0 }}">
+                        <label for="option-{{ loop.index0 }}">{{ statement }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="question-actions">
+                    <button id="submit-answer" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> 답안 제출
+                    </button>
+                    <a href="{{ url_for('wrong_notes') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> 오답 노트로 돌아가기
+                    </a>
+                </div>
+                
+                <div id="result-section" class="result-section" style="display: none;">
+                    <div class="result-header">
+                        <h3>결과</h3>
+                    </div>
+                    <div class="result-content">
+                        <div id="result-message"></div>
+                        <div id="explanation" class="explanation"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.review-header {
+    margin-bottom: 30px;
+}
+
+.review-header h1 {
+    color: #1a73e8;
+    margin-bottom: 10px;
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    color: #666;
+    font-size: 14px;
+}
+
+.breadcrumb a {
+    color: #1a73e8;
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb i {
+    margin: 0 10px;
+    font-size: 12px;
+}
+
+/* 문제 섹션 스타일 */
+.question-section {
+    margin-bottom: 30px;
+}
+
+.question-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.category-badge {
+    background: #e3f2fd;
+    color: #1a73e8;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.correct-badge {
+    background: #e8f5e9;
+    color: #4caf50;
+}
+
+.incorrect-badge {
+    background: #ffebee;
+    color: #f44336;
+}
+
+.question-content h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+.statements {
+    margin-bottom: 30px;
+}
+
+.statement {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.statement:hover {
+    background: #e9ecef;
+}
+
+.statement input[type="radio"] {
+    margin-right: 15px;
+    width: 18px;
+    height: 18px;
+}
+
+.statement label {
+    flex: 1;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.statement.correct {
+    background: #e8f5e9;
+    border-left: 4px solid #4caf50;
+}
+
+.statement.incorrect {
+    background: #ffebee;
+    border-left: 4px solid #f44336;
+}
+
+.question-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    border: none;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: #1a73e8;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0d62c9;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #f1f3f4;
+    color: #333;
+    text-decoration: none;
+}
+
+.btn-secondary:hover {
+    background: #e8eaed;
+    transform: translateY(-2px);
+}
+
+/* 결과 섹션 스타일 */
+.result-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.result-header h3 {
+    color: #1a73e8;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.result-content {
+    color: #333;
+}
+
+#result-message {
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.explanation {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #1a73e8;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .question-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .question-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const submitButton = document.getElementById('submit-answer');
+    const resultSection = document.getElementById('result-section');
+    const resultMessage = document.getElementById('result-message');
+    const explanation = document.getElementById('explanation');
+    
+    submitButton.addEventListener('click', function() {
+        const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+        
+        if (!selectedAnswer) {
+            alert('답을 선택해주세요.');
+            return;
+        }
+        
+        // 답안 제출
+        fetch('/submit_answer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                question_id: {{ question.id }},
+                selected_answer: parseInt(selectedAnswer.value)
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            // 결과 표시
+            const statements = document.querySelectorAll('.statement');
+            
+            statements.forEach(statement => {
+                statement.classList.remove('correct', 'incorrect');
+                const radio = statement.querySelector('input[type="radio"]');
+                radio.disabled = true;
+            });
+            
+            const selectedStatement = statements[result.selected_answer];
+            if (result.is_correct) {
+                selectedStatement.classList.add('correct');
+                resultMessage.innerHTML = '<span style="color: #4caf50;"><i class="fas fa-check-circle"></i> 정답입니다!</span>';
+            } else {
+                selectedStatement.classList.add('incorrect');
+                statements[result.correct_answer].classList.add('correct');
+                resultMessage.innerHTML = '<span style="color: #f44336;"><i class="fas fa-times-circle"></i> 오답입니다.</span>';
+            }
+            
+            explanation.innerHTML = `<p>${result.explanation}</p>`;
+            resultSection.style.display = 'block';
+            submitButton.disabled = true;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('답안 제출 중 오류가 발생했습니다.');
+        });
+    });
+});
+</script>
+{% endblock %} 

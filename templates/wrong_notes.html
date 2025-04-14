@@ -1,0 +1,414 @@
+{% extends "base.html" %}
+
+{% block title %}오답 노트{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="wrong-notes-header">
+        <h1>오답 노트</h1>
+        <p>학습한 문제들을 확인하고 재학습할 수 있습니다.</p>
+    </div>
+
+    <!-- 필터 및 정렬 옵션 -->
+    <div class="filter-section">
+        <div class="filter-card">
+            <h2>필터 및 정렬</h2>
+            <form id="filter-form" method="get" action="{{ url_for('wrong_notes') }}">
+                <div class="filter-group">
+                    <label>문제 유형:</label>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="radio" name="filter" value="all" {% if filter_type == 'all' %}checked{% endif %}>
+                            <span>전체</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="radio" name="filter" value="correct" {% if filter_type == 'correct' %}checked{% endif %}>
+                            <span>맞은 문제</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="radio" name="filter" value="incorrect" {% if filter_type == 'incorrect' %}checked{% endif %}>
+                            <span>틀린 문제</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>정렬 기준:</label>
+                    <div class="filter-options">
+                        <label class="filter-option">
+                            <input type="radio" name="sort" value="latest" {% if sort_by == 'latest' %}checked{% endif %}>
+                            <span>최신순</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="radio" name="sort" value="oldest" {% if sort_by == 'oldest' %}checked{% endif %}>
+                            <span>오래된순</span>
+                        </label>
+                        <label class="filter-option">
+                            <input type="radio" name="sort" value="category" {% if sort_by == 'category' %}checked{% endif %}>
+                            <span>카테고리순</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label>카테고리:</label>
+                    <select name="category" class="category-select">
+                        <option value="">전체 카테고리</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category|string == category.id|string %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> 필터 적용
+                    </button>
+                    <a href="{{ url_for('export_wrong_notes') }}" class="btn btn-success" id="export-btn">
+                        <i class="fas fa-file-export"></i> 문서로 추출(csv파일)(필터 적용 후 클릭)
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 문제 목록 -->
+    <div class="questions-section">
+        <div class="questions-card">
+            <h2>문제 목록</h2>
+            {% if questions %}
+                <div class="questions-list">
+                    {% for question in questions %}
+                    <div class="question-item {% if question.is_correct %}correct{% else %}incorrect{% endif %}">
+                        <div class="question-header">
+                            <div class="question-category">
+                                <span class="category-badge">{{ question.category_name }}</span>
+                            </div>
+                            <div class="question-status">
+                                {% if question.is_correct %}
+                                <span class="status-badge correct-badge">
+                                    <i class="fas fa-check-circle"></i> 정답
+                                </span>
+                                {% else %}
+                                <span class="status-badge incorrect-badge">
+                                    <i class="fas fa-times-circle"></i> 오답
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="question-content">
+                            <h3>{{ question.title }}</h3>
+                            <div class="question-meta">
+                                <span class="timestamp">
+                                    <i class="fas fa-clock"></i> {{ question.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="question-actions">
+                            <a href="{{ url_for('review_question', question_id=question.id) }}" class="btn btn-primary">
+                                <i class="fas fa-redo"></i> 재학습
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-questions">
+                    <i class="fas fa-book"></i>
+                    <p>표시할 문제가 없습니다.</p>
+                    <p>다른 필터 옵션을 선택해보세요.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.wrong-notes-header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.wrong-notes-header h1 {
+    color: #1a73e8;
+    margin-bottom: 10px;
+}
+
+.wrong-notes-header p {
+    color: #666;
+    font-size: 16px;
+}
+
+/* 필터 섹션 스타일 */
+.filter-section {
+    margin-bottom: 30px;
+}
+
+.filter-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.filter-card h2 {
+    color: #1a73e8;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    margin-bottom: 20px;
+}
+
+.filter-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.filter-option input[type="radio"] {
+    margin-right: 8px;
+}
+
+.category-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    font-size: 16px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* 문제 목록 스타일 */
+.questions-section {
+    margin-bottom: 30px;
+}
+
+.questions-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.questions-card h2 {
+    color: #1a73e8;
+    margin-bottom: 20px;
+}
+
+.questions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.question-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 4px solid #ddd;
+}
+
+.question-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.question-item.correct {
+    border-left-color: #4caf50;
+}
+
+.question-item.incorrect {
+    border-left-color: #f44336;
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.category-badge {
+    background: #e3f2fd;
+    color: #1a73e8;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.correct-badge {
+    background: #e8f5e9;
+    color: #4caf50;
+}
+
+.incorrect-badge {
+    background: #ffebee;
+    color: #f44336;
+}
+
+.question-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.question-meta {
+    margin-bottom: 15px;
+    color: #666;
+    font-size: 14px;
+}
+
+.timestamp {
+    display: flex;
+    align-items: center;
+}
+
+.timestamp i {
+    margin-right: 5px;
+}
+
+.question-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    border: none;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: #1a73e8;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0d62c9;
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+
+.no-questions {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.no-questions i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    color: #ddd;
+}
+
+.no-questions p {
+    margin: 5px 0;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .filter-options {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .question-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .question-actions {
+        justify-content: flex-start;
+        margin-top: 15px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filter-form');
+    const exportBtn = document.getElementById('export-btn');
+
+    // 문서 추출 버튼 클릭 이벤트
+    exportBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // 현재 필터 폼의 데이터를 가져옴
+        const formData = new FormData(filterForm);
+        const params = new URLSearchParams();
+        
+        // 폼 데이터를 URL 파라미터로 변환
+        for (const [key, value] of formData.entries()) {
+            if (value) {
+                params.append(key, value);
+            }
+        }
+        
+        // 문서 추출 페이지로 리다이렉트
+        window.location.href = `/export_wrong_notes?${params.toString()}`;
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}카테고리 관리{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="admin-header">
+        <h1>카테고리 관리</h1>
+        <a href="{{ url_for('admin_add_category') }}" class="btn btn-primary">새 카테고리 추가</a>
+    </div>
+
+    <div class="categories-list">
+        {% for category in categories %}
+        <div class="category-card">
+            <div class="category-header">
+                <h3>{{ category.name }}</h3>
+                <div class="category-actions">
+                    <a href="{{ url_for('admin_edit_category', category_id=category.id) }}" class="btn btn-sm btn-primary">수정</a>
+                    <button onclick="deleteCategory({{ category.id }})" class="btn btn-sm btn-danger">삭제</button>
+                </div>
+            </div>
+            
+            {% if category.children %}
+            <div class="subcategories">
+                <h4>하위 카테고리</h4>
+                <div class="subcategories-list">
+                    {% for subcategory in category.children %}
+                    <div class="subcategory-item">
+                        <span>{{ subcategory.name }}</span>
+                        <div class="subcategory-actions">
+                            <a href="{{ url_for('admin_edit_category', category_id=subcategory.id) }}" class="btn btn-sm btn-primary">수정</a>
+                            <button onclick="deleteCategory({{ subcategory.id }})" class="btn btn-sm btn-danger">삭제</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.categories-list {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.category-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.category-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.category-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.subcategories {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+}
+
+.subcategories h4 {
+    margin: 0 0 1rem 0;
+    color: #666;
+}
+
+.subcategories-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.subcategory-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.subcategory-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #0054a6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #003d7a;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+</style>
+
+<script>
+function deleteCategory(categoryId) {
+    if (confirm('정말로 이 카테고리를 삭제하시겠습니까?')) {
+        fetch(`/admin/categories/${categoryId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || '카테고리 삭제 중 오류가 발생했습니다.');
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

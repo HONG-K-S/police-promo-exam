@@ -17,12 +17,13 @@
             <div class="form-group">
                 <label for="rank">계급</label>
                 <select id="rank" name="rank" class="form-control" required>
+                    <option value="순경" {% if user.rank == '순경' %}selected{% endif %}>순경</option>
                     <option value="경장" {% if user.rank == '경장' %}selected{% endif %}>경장</option>
-                    <option value="서기" {% if user.rank == '서기' %}selected{% endif %}>서기</option>
                     <option value="경사" {% if user.rank == '경사' %}selected{% endif %}>경사</option>
                     <option value="경위" {% if user.rank == '경위' %}selected{% endif %}>경위</option>
                     <option value="경감" {% if user.rank == '경감' %}selected{% endif %}>경감</option>
                     <option value="경정" {% if user.rank == '경정' %}selected{% endif %}>경정</option>
+                    <option value="총경" {% if user.rank == '총경' %}selected{% endif %}>총경</option>
                     <option value="경무관" {% if user.rank == '경무관' %}selected{% endif %}>경무관</option>
                     <option value="치안감" {% if user.rank == '치안감' %}selected{% endif %}>치안감</option>
                     <option value="치안정감" {% if user.rank == '치안정감' %}selected{% endif %}>치안정감</option>
@@ -98,7 +99,41 @@
     display: flex;
     gap: 10px;
     justify-content: flex-end;
-    margin-top: 30px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background-color: #003d7a;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #002d5a;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn-secondary {
+    background-color: #e0e0e0;
+    color: #333;
+    border: 1px solid #ccc;
+}
+
+.btn-secondary:hover {
+    background-color: #d0d0d0;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 </style>
 {% endblock %} 

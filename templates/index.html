@@ -1,158 +1,584 @@
 {% extends "base.html" %}
 
-{% block title %}경찰 승진 시험 문제은행{% endblock %}
+{% block title %}홈{% endblock %}
 
 {% block content %}
 <div class="container">
-    <div class="category-selection">
-        <h2>카테고리 선택</h2>
-        <div class="categories">
-            {% for category in categories %}
-            <div class="category-item">
-                <input type="checkbox" id="category-{{ category.id }}" name="categories" value="{{ category.id }}">
-                <label for="category-{{ category.id }}">{{ category.name }}</label>
+    <!-- 프로필 섹션 -->
+    <div class="profile-section">
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="profile-info">
+                    <h2>{{ current_user.name }}</h2>
+                    <p class="rank">{{ current_user.rank }}</p>
+                </div>
             </div>
-            {% endfor %}
+            <div class="profile-details">
+                <div class="detail-item">
+                    <label>소속</label>
+                    <p>{{ current_user.department }}</p>
+                </div>
+                <div class="detail-item">
+                    <label>이메일</label>
+                    <p>{{ current_user.email or '미등록' }}</p>
+                </div>
+            </div>
         </div>
-        <div class="question-count">
-            <label for="question-count">문제 수:</label>
-            <input type="number" id="question-count" min="1" max="20" value="5">
-        </div>
-        <button id="generate-questions" class="btn btn-primary">문제 생성</button>
     </div>
 
-    <div id="questions-container" class="questions-container">
-        <!-- 문제들이 여기에 동적으로 추가됩니다 -->
+    <!-- 학습 통계 섹션 -->
+    <div class="stats-section">
+        <div class="stats-card">
+            <h2>학습 통계</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <i class="fas fa-tasks"></i>
+                    <div class="stat-info">
+                        <h3>총 문제 수</h3>
+                        <p class="stat-number">{{ total_questions }}</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-chart-line"></i>
+                    <div class="stat-info">
+                        <h3>정답률</h3>
+                        <p class="stat-number">{{ "%.1f"|format(correct_rate) }}%</p>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-clock"></i>
+                    <div class="stat-info">
+                        <h3>학습 시간</h3>
+                        <p class="stat-number">{{ study_time }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- 최근 학습 활동 섹션 -->
+    <div class="activity-section">
+        <div class="activity-card">
+            <h2>최근 학습 활동</h2>
+            <div class="activity-list">
+                {% for activity in recent_activities %}
+                <div class="activity-item">
+                    <div class="activity-time">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
+                    <div class="activity-content">
+                        <p>{{ activity.description }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 학습 시작 및 오답노트 버튼 섹션 -->
+    <div class="action-buttons-section">
+        <div class="action-buttons-card">
+            <div class="action-buttons">
+                <a href="{{ url_for('start_learning') }}" class="home-action-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    학습 시작
+                </a>
+                <a href="{{ url_for('wrong_notes') }}" class="home-action-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    오답노트
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 전용 기능 섹션 -->
+    {% if current_user.is_admin %}
+    <div class="admin-section">
+        <div class="admin-card">
+            <h2>관리자 기능</h2>
+            <div class="admin-grid">
+                <a href="{{ url_for('admin_questions') }}" class="admin-action-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>문제 관리</span>
+                </a>
+                <a href="{{ url_for('admin_categories') }}" class="admin-action-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
+                    </svg>
+                    <span>카테고리 관리</span>
+                </a>
+                <a href="{{ url_for('admin_users') }}" class="admin-action-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>사용자 관리</span>
+                </a>
+                <a href="{{ url_for('admin_dashboard') }}" class="admin-action-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>대시보드</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
-<template id="question-template">
-    <div class="question-card">
-        <h3 class="question-title"></h3>
-        <div class="statements">
-            <!-- 지문들이 여기에 동적으로 추가됩니다 -->
-        </div>
-        <div class="question-controls">
-            <button class="btn btn-primary submit-answer">답안 제출</button>
-            <button class="btn btn-secondary show-explanation" style="display: none;">해설 보기</button>
-        </div>
-        <div class="explanation" style="display: none;">
-            <!-- 해설이 여기에 표시됩니다 -->
-        </div>
-    </div>
-</template>
-{% endblock %}
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
 
-{% block scripts %}
+/* 프로필 섹션 스타일 */
+.profile-section {
+    margin-bottom: 30px;
+}
+
+.profile-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    background: #f0f2f5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+}
+
+.profile-avatar i {
+    font-size: 40px;
+    color: #1a73e8;
+}
+
+.profile-info h2 {
+    margin: 0;
+    color: #1a73e8;
+    font-size: 24px;
+}
+
+.profile-info .rank {
+    margin: 5px 0 0;
+    color: #666;
+}
+
+.profile-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.detail-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.detail-item label {
+    display: block;
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.detail-item p {
+    margin: 0;
+    color: #333;
+    font-weight: 500;
+}
+
+/* 통계 섹션 스타일 */
+.stats-section {
+    margin-bottom: 30px;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stats-card h2 {
+    color: #1a73e8;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.stat-item {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+}
+
+.stat-item i {
+    font-size: 24px;
+    color: #1a73e8;
+    margin-right: 15px;
+}
+
+.stat-info h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #666;
+}
+
+.stat-number {
+    margin: 5px 0 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: #1a73e8;
+}
+
+/* 활동 섹션 스타일 */
+.activity-section {
+    margin-bottom: 30px;
+}
+
+.activity-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.activity-card h2 {
+    color: #1a73e8;
+    margin-bottom: 20px;
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.activity-item {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.activity-item:hover {
+    transform: translateX(5px);
+}
+
+.activity-time {
+    min-width: 150px;
+    color: #666;
+    font-size: 14px;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-content p {
+    margin: 0;
+    color: #333;
+}
+
+/* 액션 버튼 섹션 스타일 */
+.action-buttons-section {
+    margin-bottom: 30px;
+}
+
+.action-buttons-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.home-action-button {
+    flex: 1;
+    padding: 15px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background-color: #003d7a;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.home-action-button:hover {
+    background-color: #002d5a;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.home-action-button svg {
+    width: 20px;
+    height: 20px;
+    stroke: white;
+    flex-shrink: 0;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .profile-avatar {
+        margin: 0 0 15px 0;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .activity-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .activity-time {
+        margin-bottom: 10px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+
+/* 관리자 섹션 스타일 */
+.admin-section {
+    margin-bottom: 30px;
+}
+
+.admin-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.admin-card h2 {
+    color: #1a73e8;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.admin-action-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.admin-action-button:hover {
+    transform: translateY(-5px);
+    background: #e9ecef;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-action-button svg {
+    margin-bottom: 10px;
+    color: #0054a6;
+}
+
+.admin-action-button span {
+    font-weight: 500;
+    font-size: 16px;
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const generateButton = document.getElementById('generate-questions');
-    const questionsContainer = document.getElementById('questions-container');
-    const questionTemplate = document.getElementById('question-template');
-
-    generateButton.addEventListener('click', async function() {
-        const selectedCategories = Array.from(document.querySelectorAll('input[name="categories"]:checked'))
-            .map(cb => cb.value);
-        const questionCount = document.getElementById('question-count').value;
-
-        if (selectedCategories.length === 0) {
-            alert('최소 하나의 카테고리를 선택해주세요.');
-            return;
-        }
-
-        try {
-            const response = await fetch('/get_random_questions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    categories: selectedCategories,
-                    count: questionCount
-                })
-            });
-
-            const questions = await response.json();
-            displayQuestions(questions);
-        } catch (error) {
+    const startStudyBtn = document.getElementById('start-study');
+    
+    startStudyBtn.addEventListener('click', function() {
+        // 모든 카테고리 선택
+        fetch('/get_random_questions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                categories: [],  // 빈 배열은 모든 카테고리 선택을 의미
+                num_questions: 5
+            })
+        })
+        .then(response => response.json())
+        .then(questions => {
+            if (questions.length > 0) {
+                // 문제 표시 로직
+                displayQuestions(questions);
+            } else {
+                alert('문제가 없습니다.');
+            }
+        })
+        .catch(error => {
             console.error('Error:', error);
             alert('문제를 가져오는 중 오류가 발생했습니다.');
-        }
+        });
     });
-
+    
     function displayQuestions(questions) {
-        questionsContainer.innerHTML = '';
+        // 문제 표시 로직 구현
+        const container = document.createElement('div');
+        container.className = 'questions-container';
+        container.id = 'questions-container';
         
         questions.forEach((question, index) => {
-            const questionElement = questionTemplate.content.cloneNode(true);
-            const questionCard = questionElement.querySelector('.question-card');
-            const titleElement = questionElement.querySelector('.question-title');
-            const statementsContainer = questionElement.querySelector('.statements');
-            const submitButton = questionElement.querySelector('.submit-answer');
-            const showExplanationButton = questionElement.querySelector('.show-explanation');
-            const explanationDiv = questionElement.querySelector('.explanation');
-
-            // 문제 제목 설정
-            titleElement.textContent = question.title;
-
-            // 지문 추가
-            Object.entries(question.statements).forEach(([key, value]) => {
-                const statementDiv = document.createElement('div');
-                statementDiv.className = 'statement';
-                
-                const radio = document.createElement('input');
-                radio.type = 'radio';
-                radio.name = `question-${index}`;
-                radio.value = key;
-                radio.id = `question-${index}-${key}`;
-                
-                const label = document.createElement('label');
-                label.htmlFor = `question-${index}-${key}`;
-                label.textContent = value;
-                
-                statementDiv.appendChild(radio);
-                statementDiv.appendChild(label);
-                statementsContainer.appendChild(statementDiv);
-            });
-
-            // 답안 제출 버튼 이벤트
-            submitButton.addEventListener('click', function() {
-                const selectedAnswer = document.querySelector(`input[name="question-${index}"]:checked`);
-                if (!selectedAnswer) {
-                    alert('답안을 선택해주세요.');
-                    return;
-                }
-
-                const isCorrect = parseInt(selectedAnswer.value) === question.correct_answer;
-                const statements = statementsContainer.querySelectorAll('.statement');
-                
-                statements.forEach(statement => {
-                    const radio = statement.querySelector('input');
-                    const label = statement.querySelector('label');
-                    
-                    if (parseInt(radio.value) === question.correct_answer) {
-                        label.classList.add('correct');
-                    } else if (parseInt(radio.value) === parseInt(selectedAnswer.value)) {
-                        label.classList.add('incorrect');
-                    }
-                    
-                    radio.disabled = true;
-                });
-
-                submitButton.style.display = 'none';
-                showExplanationButton.style.display = 'inline-block';
-            });
-
-            // 해설 보기 버튼 이벤트
-            showExplanationButton.addEventListener('click', function() {
-                explanationDiv.textContent = question.explanation;
-                explanationDiv.style.display = 'block';
-                showExplanationButton.style.display = 'none';
-            });
-
-            questionsContainer.appendChild(questionElement);
+            const questionElement = createQuestionElement(question, index + 1);
+            container.appendChild(questionElement);
         });
+        
+        // 기존 컨텐츠를 문제로 교체
+        document.querySelector('.container').innerHTML = '';
+        document.querySelector('.container').appendChild(container);
+    }
+    
+    function createQuestionElement(question, number) {
+        const div = document.createElement('div');
+        div.className = 'question-card';
+        div.innerHTML = `
+            <h3>문제 ${number}</h3>
+            <p>${question.title}</p>
+            <div class="options">
+                ${question.statements.map((statement, index) => `
+                    <label class="option">
+                        <input type="radio" name="q${question.id}" value="${index}">
+                        ${statement}
+                    </label>
+                `).join('')}
+            </div>
+            <button class="submit-btn" onclick="submitAnswer(${question.id}, this)">제출</button>
+        `;
+        return div;
     }
 });
+
+function submitAnswer(questionId, button) {
+    const selectedAnswer = button.parentElement.querySelector('input[type="radio"]:checked');
+    if (!selectedAnswer) {
+        alert('답을 선택해주세요.');
+        return;
+    }
+    
+    fetch('/submit_answer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            question_id: questionId,
+            selected_answer: parseInt(selectedAnswer.value)
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        // 결과 표시 로직
+        const questionCard = button.parentElement;
+        const options = questionCard.querySelectorAll('.option');
+        
+        options.forEach(option => {
+            option.classList.remove('correct', 'incorrect');
+            option.style.pointerEvents = 'none';
+        });
+        
+        const selectedOption = options[result.selected_answer];
+        if (result.is_correct) {
+            selectedOption.classList.add('correct');
+        } else {
+            selectedOption.classList.add('incorrect');
+            options[result.correct_answer].classList.add('correct');
+        }
+        
+        button.disabled = true;
+        
+        // 설명 표시
+        const explanation = document.createElement('div');
+        explanation.className = 'explanation';
+        explanation.innerHTML = `<p>${result.explanation}</p>`;
+        questionCard.appendChild(explanation);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('답안 제출 중 오류가 발생했습니다.');
+    });
+}
 </script>
 {% endblock %} 

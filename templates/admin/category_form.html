@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}{{ '카테고리 추가' if not category else '카테고리 수정' }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="category-form-container">
+        <h1>{{ '카테고리 추가' if not category else '카테고리 수정' }}</h1>
+        
+        <form method="POST" class="category-form">
+            <div class="form-group">
+                <label for="name">카테고리 이름</label>
+                <input type="text" id="name" name="name" class="form-control" 
+                       value="{{ category.name if category else '' }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="parent_id">상위 카테고리</label>
+                <select id="parent_id" name="parent_id" class="form-control">
+                    <option value="">없음 (최상위 카테고리)</option>
+                    {% for parent in parent_categories %}
+                        {% if not category or parent.id != category.id %}
+                            <option value="{{ parent.id }}" 
+                                    {% if category and category.parent_id == parent.id %}selected{% endif %}>
+                                {{ parent.name }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">저장</button>
+                <a href="{{ url_for('admin_manage_categories') }}" class="btn btn-secondary">취소</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.category-form-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.category-form-container h1 {
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #666;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    border-color: #0054a6;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 84, 166, 0.2);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #0054a6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #003d7a;
+}
+
+.btn-secondary {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background-color: #d0d0d0;
+}
+</style>
+{% endblock %} 

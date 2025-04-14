@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}학습 시작{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="start-learning-header">
+        <h1>학습 시작</h1>
+        <p>학습할 문제의 카테고리와 개수를 선택하세요.</p>
+    </div>
+
+    <div class="learning-options-section">
+        <div class="learning-options-card">
+            <h2>학습 옵션</h2>
+            <form id="learning-form" method="post" action="{{ url_for('start_learning') }}">
+                <div class="form-group">
+                    <label for="category">카테고리 선택:</label>
+                    <select name="category" id="category" class="form-control" required>
+                        <option value="">카테고리를 선택하세요</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="question-count">문제 개수:</label>
+                    <div class="count-selector">
+                        <button type="button" class="count-btn" data-action="decrease">-</button>
+                        <input type="number" name="question_count" id="question-count" class="form-control" value="5" min="1" max="50" required>
+                        <button type="button" class="count-btn" data-action="increase">+</button>
+                    </div>
+                    <small class="form-text text-muted">1-50개 사이의 문제를 선택할 수 있습니다.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>학습 모드:</label>
+                    <div class="mode-options">
+                        <label class="mode-option">
+                            <input type="radio" name="mode" value="random" checked>
+                            <span>무작위 문제</span>
+                        </label>
+                        <label class="mode-option">
+                            <input type="radio" name="mode" value="difficult">
+                            <span>어려운 문제 우선</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-play"></i> 학습 시작
+                    </button>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> 돌아가기
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.start-learning-header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.start-learning-header h1 {
+    color: #1a73e8;
+    margin-bottom: 10px;
+}
+
+.start-learning-header p {
+    color: #666;
+    font-size: 16px;
+}
+
+.learning-options-section {
+    margin-bottom: 30px;
+}
+
+.learning-options-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.learning-options-card h2 {
+    color: #1a73e8;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    font-size: 16px;
+}
+
+.count-selector {
+    display: flex;
+    align-items: center;
+    max-width: 200px;
+}
+
+.count-btn {
+    width: 40px;
+    height: 40px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.count-btn:hover {
+    background: #e9ecef;
+}
+
+#question-count {
+    width: 80px;
+    text-align: center;
+    margin: 0 10px;
+    -moz-appearance: textfield;
+}
+
+#question-count::-webkit-outer-spin-button,
+#question-count::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.form-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+.mode-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.mode-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.mode-option input[type="radio"] {
+    margin-right: 8px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 30px;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    border: none;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background: #1a73e8;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0d62c9;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const questionCountInput = document.getElementById('question-count');
+    const decreaseBtn = document.querySelector('[data-action="decrease"]');
+    const increaseBtn = document.querySelector('[data-action="increase"]');
+    
+    // 감소 버튼 클릭 이벤트
+    decreaseBtn.addEventListener('click', function() {
+        let currentValue = parseInt(questionCountInput.value);
+        if (currentValue > 1) {
+            questionCountInput.value = currentValue - 1;
+        }
+    });
+    
+    // 증가 버튼 클릭 이벤트
+    increaseBtn.addEventListener('click', function() {
+        let currentValue = parseInt(questionCountInput.value);
+        if (currentValue < 50) {
+            questionCountInput.value = currentValue + 1;
+        }
+    });
+    
+    // 입력값 유효성 검사
+    questionCountInput.addEventListener('change', function() {
+        let value = parseInt(this.value);
+        if (isNaN(value) || value < 1) {
+            this.value = 1;
+        } else if (value > 50) {
+            this.value = 50;
+        }
+    });
+});
+</script>
+{% endblock %} 

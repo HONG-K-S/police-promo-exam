@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}관리자 로그인{% endblock %}
+
+{% block content %}
+<div class="admin-login-container">
+    <h1>관리자 로그인</h1>
+    
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" action="{{ url_for('admin_login') }}">
+        {{ form.hidden_tag() }}
+        
+        <div class="form-group">
+            {{ form.username.label }}
+            {{ form.username(class="form-control") }}
+            {% if form.username.errors %}
+                {% for error in form.username.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.password.label }}
+            {{ form.password(class="form-control") }}
+            {% if form.password.errors %}
+                {% for error in form.password.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.remember_me() }} {{ form.remember_me.label }}
+        </div>
+        
+        {{ form.submit(class="admin-login-button") }}
+    </form>
+    
+    <div class="text-center mt-3">
+        <a href="{{ url_for('login') }}" class="text-muted">일반 사용자 로그인으로 돌아가기</a>
+    </div>
+</div>
+{% endblock %} 

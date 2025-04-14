@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="questions-container">
+    <h1>문제 관리</h1>
+    
+    <!-- 문제 추가/수정 폼 -->
+    <div class="question-form">
+        <h2>{{ '문제 추가' if not question else '문제 수정' }}</h2>
+        <form method="POST" action="{{ url_for('admin_questions') }}">
+            <input type="hidden" name="question_id" value="{{ question.id if question else '' }}">
+            
+            <div class="form-group">
+                <label for="category">카테고리</label>
+                <select name="category" id="category" required>
+                    <option value="">카테고리 선택</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if question and question.category_id == category.id %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="title">문제 제목</label>
+                <input type="text" name="title" id="title" value="{{ question.title if question else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="content">문제 내용</label>
+                <textarea name="content" id="content" rows="5" required>{{ question.content if question else '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="correct_answer">정답</label>
+                <input type="text" name="correct_answer" id="correct_answer" value="{{ question.correct_answer if question else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="explanation">설명</label>
+                <textarea name="explanation" id="explanation" rows="3">{{ question.explanation if question else '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="difficulty">난이도</label>
+                <select name="difficulty" id="difficulty" required>
+                    <option value="1" {% if question and question.difficulty == 1 %}selected{% endif %}>쉬움</option>
+                    <option value="2" {% if question and question.difficulty == 2 %}selected{% endif %}>보통</option>
+                    <option value="3" {% if question and question.difficulty == 3 %}selected{% endif %}>어려움</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">저장</button>
+                {% if question %}
+                <a href="{{ url_for('admin_questions') }}" class="btn btn-secondary">취소</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- 문제 목록 -->
+    <div class="questions-list">
+        <h2>문제 목록</h2>
+        <div class="filters">
+            <select id="category-filter" onchange="filterQuestions()">
+                <option value="">모든 카테고리</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <select id="difficulty-filter" onchange="filterQuestions()">
+                <option value="">모든 난이도</option>
+                <option value="1">쉬움</option>
+                <option value="2">보통</option>
+                <option value="3">어려움</option>
+            </select>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>카테고리</th>
+                    <th>제목</th>
+                    <th>난이도</th>
+                    <th>정답률</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in questions %}
+                <tr data-category="{{ q.category_id }}" data-difficulty="{{ q.difficulty }}">
+                    <td>{{ q.category.name }}</td>
+                    <td>{{ q.title }}</td>
+                    <td>
+                        {% if q.difficulty == 1 %}쉬움
+                        {% elif q.difficulty == 2 %}보통
+                        {% else %}어려움{% endif %}
+                    </td>
+                    <td>{{ "%.1f"|format(q.correct_rate) }}%</td>
+                    <td>
+                        <a href="{{ url_for('admin_questions', edit=q.id) }}" class="btn btn-small">수정</a>
+                        <button onclick="deleteQuestion({{ q.id }})" class="btn btn-small btn-danger">삭제</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.questions-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.question-form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.questions-list {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filters select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    background: #f8f9fa;
+    font-weight: bold;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 0.9em;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+</style>
+
+<script>
+function filterQuestions() {
+    const categoryFilter = document.getElementById('category-filter').value;
+    const difficultyFilter = document.getElementById('difficulty-filter').value;
+    
+    document.querySelectorAll('tbody tr').forEach(row => {
+        const category = row.dataset.category;
+        const difficulty = row.dataset.difficulty;
+        
+        const categoryMatch = !categoryFilter || category === categoryFilter;
+        const difficultyMatch = !difficultyFilter || difficulty === difficultyFilter;
+        
+        row.style.display = categoryMatch && difficultyMatch ? '' : 'none';
+    });
+}
+
+function deleteQuestion(questionId) {
+    if (confirm('정말로 이 문제를 삭제하시겠습니까?')) {
+        fetch(`/admin/questions/${questionId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('문제 삭제 중 오류가 발생했습니다.');
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

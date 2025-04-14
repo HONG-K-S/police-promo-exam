@@ -4,7 +4,13 @@
 
 {% block content %}
 <div class="container">
-    <h1>문제 관리</h1>
+    <div class="admin-header">
+        <h1>문제 관리</h1>
+        <div class="admin-actions">
+            <a href="{{ url_for('admin_manage_categories') }}" class="btn btn-secondary">카테고리 관리</a>
+            <a href="{{ url_for('admin_add_question') }}" class="btn btn-success">새 문제 추가</a>
+        </div>
+    </div>
     
     <!-- 문제 검색 폼 -->
     <div class="search-form">
@@ -24,11 +30,6 @@
             </div>
             <button type="submit" class="btn btn-primary">검색</button>
         </form>
-    </div>
-
-    <!-- 문제 추가 버튼 -->
-    <div class="add-question">
-        <a href="{{ url_for('admin_add_question') }}" class="btn btn-success">새 문제 추가</a>
     </div>
 
     <!-- 문제 목록 -->

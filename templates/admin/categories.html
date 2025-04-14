@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="categories-container">
+    <h1>카테고리 관리</h1>
+    
+    <!-- 카테고리 추가/수정 폼 -->
+    <div class="category-form">
+        <h2>{{ '카테고리 추가' if not category else '카테고리 수정' }}</h2>
+        <form method="POST" action="{{ url_for('admin_categories') }}">
+            <input type="hidden" name="category_id" value="{{ category.id if category else '' }}">
+            
+            <div class="form-group">
+                <label for="name">카테고리 이름</label>
+                <input type="text" name="name" id="name" value="{{ category.name if category else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">설명</label>
+                <textarea name="description" id="description" rows="3">{{ category.description if category else '' }}</textarea>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">저장</button>
+                {% if category %}
+                <a href="{{ url_for('admin_categories') }}" class="btn btn-secondary">취소</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- 카테고리 목록 -->
+    <div class="categories-list">
+        <h2>카테고리 목록</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>이름</th>
+                    <th>설명</th>
+                    <th>문제 수</th>
+                    <th>정답률</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td>{{ cat.name }}</td>
+                    <td>{{ cat.description }}</td>
+                    <td>{{ cat.question_count }}</td>
+                    <td>{{ "%.1f"|format(cat.correct_rate) }}%</td>
+                    <td>
+                        <a href="{{ url_for('admin_categories', edit=cat.id) }}" class="btn btn-small">수정</a>
+                        <button onclick="deleteCategory({{ cat.id }})" class="btn btn-small btn-danger">삭제</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.categories-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.category-form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.categories-list {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    background: #f8f9fa;
+    font-weight: bold;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 0.9em;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+</style>
+
+<script>
+function deleteCategory(categoryId) {
+    if (confirm('정말로 이 카테고리를 삭제하시겠습니까?\n이 카테고리의 모든 문제도 함께 삭제됩니다.')) {
+        fetch(`/admin/categories/${categoryId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('카테고리 삭제 중 오류가 발생했습니다.');
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 
