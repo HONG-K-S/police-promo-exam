@@ -20,5 +20,9 @@ def init_db(app):
     """
     데이터베이스 테이블을 생성하는 함수입니다.
     """
-    with app.app_context():
-        db.create_all() 
+    try:
+        with app.app_context():
+            db.create_all()
+            print("데이터베이스 테이블이 성공적으로 생성되었습니다.")
+    except Exception as e:
+        print(f"데이터베이스 테이블 생성 중 오류 발생: {str(e)}") 
