@@ -25,6 +25,18 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = '이 페이지에 접근하려면 로그인이 필요합니다.'
 
+def admin_required(f):
+    """
+    관리자 권한이 필요한 페이지에 대한 데코레이터입니다.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not isinstance(current_user, Admin):
+            flash('이 페이지에 접근하려면 관리자 권한이 필요합니다.')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @login_manager.user_loader
 def load_user(user_id):
     """

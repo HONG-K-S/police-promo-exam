@@ -4,5 +4,5 @@ from database import init_db
 
 if __name__ == '__main__':
     with app.app_context():
-        init_db()  # 데이터베이스 초기화
+        init_db(app)  # 데이터베이스 초기화
     app.run(host='0.0.0.0', port=8080)  # Replit에서 실행하기 위한 설정 

@@ -16,7 +16,7 @@ def init_app(app):
     # 데이터베이스 초기화
     db.init_app(app)
 
-def init_db():
+def init_db(app):
     """
     데이터베이스 테이블을 생성하는 함수입니다.
     """
