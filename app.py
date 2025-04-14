@@ -45,10 +45,20 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 @app.route('/')
+def index():
+    """
+    메인 페이지를 보여주는 함수입니다.
+    로그인하지 않은 사용자는 로그인 페이지로 리다이렉트됩니다.
+    """
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    return redirect(url_for('login'))
+
+@app.route('/home')
 @login_required
 def home():
     """
-    메인 페이지를 보여주는 함수입니다.
+    로그인 후 메인 페이지를 보여주는 함수입니다.
     모든 상위 카테고리(경찰실무종합, 형법, 형사소송법)를 가져와서 템플릿에 전달합니다.
     로그인이 필요합니다.
     """
