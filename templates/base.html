@@ -257,30 +257,8 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const homeButton = document.getElementById('home-button');
-            
-            // 홈 버튼 클릭 이벤트
-            homeButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // 문제 풀기 중인지 확인 (questions-container에 문제가 있는지 확인)
-                const questionsContainer = document.getElementById('questions-container');
-                const hasQuestions = questionsContainer && questionsContainer.children.length > 0;
-                
-                if (hasQuestions) {
-                    // 문제 풀기 중이면 경고창 표시
-                    if (confirm('현재 문제를 풀고 있습니다. 홈 화면으로 이동하시겠습니까?')) {
-                        window.location.href = "{{ url_for('home') }}";
-                    }
-                } else {
-                    // 문제 풀기 중이 아니면 바로 홈 화면으로 이동
-                    window.location.href = "{{ url_for('home') }}";
-                }
-            });
-
-            // 현재 시간 표시 함수
-            function updateCurrentTime() {
+        window.onload = function() {
+            function updateTime() {
                 const now = new Date();
                 const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -292,11 +270,10 @@
                 const timeString = `${year}. ${month}. ${day}. ${hours}:${minutes}:${seconds}`;
                 document.getElementById('current-time').textContent = timeString;
             }
-
-            // 초기 시간 설정 및 1초마다 업데이트
-            updateCurrentTime();
-            setInterval(updateCurrentTime, 1000);
-        });
+            
+            updateTime();
+            setInterval(updateTime, 1000);
+        };
     </script>
 
     {% block scripts %}{% endblock %}

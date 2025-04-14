@@ -8,7 +8,7 @@ import os
 import random
 from functools import wraps
 from datetime import datetime, timedelta
-from forms import LoginForm, AdminLoginForm
+from forms import LoginForm, AdminLoginForm, UserEditForm
 import io
 import csv
 from flask_migrate import Migrate
@@ -525,49 +525,54 @@ def admin_users():
 
 @app.route('/admin/users/<int:user_id>/edit', methods=['GET', 'POST'])
 @login_required
-def edit_user(user_id):
-    # 관리자 권한 확인
-    if not current_user.is_admin:
-        flash('관리자 권한이 필요합니다.', 'error')
-        return redirect(url_for('home'))
-    
-    # 사용자 정보 가져오기
+@admin_required
+def admin_edit_user(user_id):
     user = User.query.get_or_404(user_id)
+    form = UserEditForm(obj=user)
     
-    if request.method == 'POST':
-        # 폼 데이터 가져오기
-        username = request.form.get('username')
-        name = request.form.get('name')
-        rank = request.form.get('rank')
-        department = request.form.get('department')
-        email = request.form.get('email')
-        phone = request.form.get('phone')
-        new_password = request.form.get('new_password')
-        is_active = request.form.get('is_active') == 'on'
+    if form.validate_on_submit():
+        user.name = form.name.data
+        user.rank = form.rank.data
+        user.department = form.department.data
+        user.email = form.email.data
+        user.phone = form.phone.data
         
-        # 사용자 정보 업데이트
-        user.username = username
-        user.name = name
-        user.rank = rank
-        user.department = department
-        user.email = email
-        user.phone = phone
-        user.is_active = is_active
+        if form.password.data:
+            user.set_password(form.password.data)
         
-        # 새 비밀번호가 입력된 경우에만 업데이트
-        if new_password:
-            user.set_password(new_password)
+        user.is_admin = form.is_admin.data
+        user.is_active = form.is_active.data
         
         try:
             db.session.commit()
-            flash('사용자 정보가 성공적으로 업데이트되었습니다.', 'success')
+            flash('사용자 정보가 성공적으로 수정되었습니다.', 'success')
             return redirect(url_for('admin_users'))
         except Exception as e:
             db.session.rollback()
-            flash('사용자 정보 업데이트 중 오류가 발생했습니다.', 'error')
-            return redirect(url_for('edit_user', user_id=user_id))
+            flash('사용자 정보 수정 중 오류가 발생했습니다.', 'danger')
     
-    return render_template('admin/edit_user.html', user=user)
+    return render_template('admin/edit_user.html', form=form, user=user)
+
+@app.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    
+    # 자신의 계정은 삭제할 수 없음
+    if user.id == current_user.id:
+        flash('자신의 계정은 삭제할 수 없습니다.', 'danger')
+        return redirect(url_for('admin_users'))
+    
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        flash('사용자가 성공적으로 삭제되었습니다.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('사용자 삭제 중 오류가 발생했습니다.', 'danger')
+    
+    return redirect(url_for('admin_users'))
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
