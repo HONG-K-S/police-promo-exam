@@ -1,6 +1,6 @@
 # Replit과 로컬 환경에서 실행되는 메인 파일입니다.
 from app import app
-from database import init_db
+from models import init_db
 import os
 
 if __name__ == '__main__':

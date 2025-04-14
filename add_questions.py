@@ -1,5 +1,7 @@
-from app import app, db
-from models import Category, Question
+from app import app
+from models import db
+from models.category import Category
+from models.question import Question
 
 def add_sample_questions():
     with app.app_context():

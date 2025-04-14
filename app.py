@@ -1,20 +1,26 @@
 # Flask 웹 애플리케이션의 메인 파일입니다.
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, send_file
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import case
-import os
-import random
+from sqlalchemy import case, text
 from functools import wraps
 from datetime import datetime, timedelta
-from forms import LoginForm, AdminLoginForm, UserEditForm
+from urllib.parse import urlparse
+import os
+import random
 import io
 import csv
-from flask_migrate import Migrate
-from database import db, init_app
-from models import Category, Question, User, AnswerRecord
-from urllib.parse import urlparse
+
+from models import db, init_db, create_initial_data
+from models.user import User
+from models.category import Category
+from models.topic import Topic
+from models.question import Question
+from models.statement import Statement
+from models.answer_record import AnswerRecord
+from models.learning_session import LearningSession
+from forms import LoginForm, AdminLoginForm, UserEditForm
 
 # Flask 애플리케이션 생성
 app = Flask(__name__)
@@ -24,8 +30,8 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-please-change-i
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///police_promo.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# 데이터베이스 설정과 모델 가져오기
-init_app(app)
+# 데이터베이스 설정
+init_db(app)
 
 # Flask-Login 설정
 login_manager = LoginManager()
@@ -36,53 +42,9 @@ login_manager.login_message = '이 페이지에 접근하려면 로그인이 필
 # Flask-Migrate 설정
 migrate = Migrate(app, db)
 
-# 모델 가져오기 (migrate 설정 후에 가져와야 함)
-from models import Category, Question, User, AnswerRecord
-
-# 데이터베이스 테이블 초기화 및 초기 계정 생성
-def create_initial_accounts():
-    """초기 계정 생성"""
-    try:
-        # 관리자 계정 생성
-        admin = User.query.filter_by(username='admin').first()
-        if not admin:
-            admin = User(
-                username='admin',
-                name='관리자',
-                rank='관리자',
-                department='시스템관리과',
-                email='admin@example.com',
-                phone='010-0000-0000',
-                is_admin=True
-            )
-            admin.set_password('admin123!')
-            db.session.add(admin)
-        
-        # 테스트 사용자 계정 생성
-        test_user = User.query.filter_by(username='test').first()
-        if not test_user:
-            test_user = User(
-                username='test',
-                name='테스트사용자',
-                rank='경위',
-                department='테스트과',
-                email='test@example.com',
-                phone='010-1111-1111',
-                is_admin=False
-            )
-            test_user.set_password('test123!')
-            db.session.add(test_user)
-        
-        db.session.commit()
-        print("초기 계정이 성공적으로 생성되었습니다.")
-    except Exception as e:
-        db.session.rollback()
-        print(f"초기 계정 생성 중 오류 발생: {str(e)}")
-
-# 애플리케이션 시작 시 초기 계정 생성
+# 애플리케이션 시작 시 초기 데이터 생성
 with app.app_context():
-    db.create_all()
-    create_initial_accounts()
+    create_initial_data()
 
 @login_manager.user_loader
 def load_user(id):

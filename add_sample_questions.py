@@ -1,5 +1,7 @@
-from app import app, db
-from models import Category, Question
+from app import app
+from models import db
+from models.category import Category
+from models.question import Question
 
 def add_sample_questions():
     with app.app_context():
@@ -199,7 +201,7 @@ def add_sample_questions():
                     "4": "감식은 증거물의 경제적 가치를 평가하는 방법이다."
                 },
                 correct_answer=1,
-                explanation="감식은 증거물의 과학적 분석을 통해 증거의 신뢰성을 높이는 방법이다. 이는 수사활동에서 중요한 역할을 한다.",
+                explanation="감식은 증거물의 과학적 분석을 통해 증거의 신뢰성을 높이는 방법이다. 이는 수사기술의 한 분야로, 증거의 신뢰성과 증거능력을 확보하기 위해 필수적이다.",
                 category_id=police_tech_category.id
             ),
             
@@ -327,9 +329,9 @@ def add_sample_questions():
         # 데이터베이스에 저장
         for question in questions:
             db.session.add(question)
-        
         db.session.commit()
-        print("샘플 문제 20개가 성공적으로 추가되었습니다.")
+        
+        print('샘플 문제가 추가되었습니다.')
 
 if __name__ == '__main__':
     add_sample_questions() 
