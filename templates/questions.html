@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}문제 목록{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>문제 목록</h1>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="category-filter">
+                <option value="">모든 카테고리</option>
+                <!-- 카테고리 옵션들이 여기에 동적으로 로드됩니다 -->
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>번호</th>
+                    <th>제목</th>
+                    <th>카테고리</th>
+                    <th>난이도</th>
+                    <th>정답률</th>
+                    <th>상태</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody id="questions-table">
+                <!-- 문제들이 여기에 동적으로 로드됩니다 -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 카테고리 목록 로드
+    fetch('/api/categories')
+        .then(response => response.json())
+        .then(categories => {
+            const select = document.getElementById('category-filter');
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('카테고리 목록을 불러오는 중 오류가 발생했습니다.');
+        });
+
+    // 문제 목록 로드
+    loadQuestions();
+
+    // 카테고리 필터 변경 이벤트
+    document.getElementById('category-filter').addEventListener('change', loadQuestions);
+});
+
+function loadQuestions() {
+    const categoryId = document.getElementById('category-filter').value;
+    const url = categoryId ? `/api/categories/${categoryId}/questions` : '/api/questions';
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(questions => {
+            const tbody = document.getElementById('questions-table');
+            tbody.innerHTML = ''; // 기존 내용 클리어
+            
+            questions.forEach((question, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${question.title}</td>
+                    <td>${question.category_name}</td>
+                    <td>${question.difficulty}</td>
+                    <td>${question.accuracy || 0}%</td>
+                    <td>${question.status || '미시도'}</td>
+                    <td>
+                        <a href="/question/${question.id}" class="btn btn-sm btn-primary">풀기</a>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('문제 목록을 불러오는 중 오류가 발생했습니다.');
+        });
+}
+</script>
+{% endblock %} 

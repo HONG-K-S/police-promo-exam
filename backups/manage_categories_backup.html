@@ -48,7 +48,7 @@
     <!-- 카테고리 목록 -->
     {% macro render_category(category) %}
         <div class="category-item" data-id="{{ category.id }}">
-            <div class="category-header {% if category.is_leaf %}is-leaf{% endif %} d-flex justify-content-between align-items-center p-2">
+            <div class="category-header d-flex justify-content-between align-items-center p-2">
                 <div class="category-info">
                     <div class="category-badges me-2">
                         {% if not category.parent_id %}
@@ -193,88 +193,51 @@ function deleteCategory(categoryId) {
 <style>
 .category-item {
     margin-bottom: 0.5rem;
+    border: 1px solid #dee2e6;
     border-radius: 0.25rem;
+    box-sizing: border-box;
     width: 100%;
 }
 
-/* 최상위 카테고리에만 테두리와 배경색 적용 */
-.card > .card-body > .category-item {
-    border: 1px solid #dee2e6;
-}
-
-.card > .card-body > .category-item > .category-header {
-    background-color: #e7f1ff;
-}
-
-/* 잎사귀 카테고리 스타일 */
-.category-item .category-header.is-leaf {
-    background-color: #ebfff0;
-}
-
-/* 하위 카테고리의 테두리 제거 */
-.category-children .category-item {
-    border: none;
-    margin-bottom: 0.25rem;
-}
-
 .category-header {
-    border-bottom: none;
-    padding: 0.5rem 1rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
 }
 
-/* 하위 카테고리 들여쓰기와 연결선 */
 .category-children {
-    padding-left: 1.25rem;
-    position: relative;
-}
-
-.category-children::before {
-    content: '';
-    position: absolute;
-    left: 0.75rem;
-    top: 0;
-    bottom: 1rem;
-    width: 1px;
-    background-color: #dee2e6;
-}
-
-.category-children .category-item::before {
-    content: '';
-    position: absolute;
-    left: -0.5rem;
-    top: 1.25rem;
-    width: 0.5rem;
-    height: 1px;
-    background-color: #dee2e6;
+    padding: 0.5rem 0 0.5rem 0.75rem;
+    box-sizing: border-box;
+    width: calc(100% - 0.75rem);
 }
 
 .category-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     flex: 1;
     min-width: 0;
+    margin-right: 1rem;
 }
 
 .category-badges {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
     flex-shrink: 0;
+    margin-right: 0.5rem;
 }
 
 .badge {
     font-size: 0.875rem;
-    padding: 0.25rem 0.5rem;
     display: inline-flex;
     align-items: center;
+    padding: 0.25rem 0.5rem;
 }
 
 .badge i {
-    font-size: 0.75rem;
+    margin-right: 0.25rem;
 }
 
 .root-category-name {
@@ -287,16 +250,8 @@ function deleteCategory(categoryId) {
 }
 
 .leaf-category-name {
-    color: #198754;
+    color: #75b798;
     font-weight: bold;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.category-name {
-    flex: 1;
-    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -305,41 +260,29 @@ function deleteCategory(categoryId) {
 .category-actions {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-left: 1rem;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
-.card {
-    margin-bottom: 1rem;
-    border: 1px solid rgba(0,0,0,.125);
-    border-radius: 0.25rem;
-    background-color: #fff;
+.category-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
 }
 
 .card-body {
-    padding: 1rem;
+    padding: 0.75rem;
 }
 
-/* 최상위 카테고리와 하위 카테고리 간격 조정 */
-.category-children {
-    padding-top: 0.5rem;
-    padding-bottom: 0.25rem;
+.category-children .category-item {
+    margin-right: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
-/* 마지막 아이템의 마진 제거 */
 .category-children .category-item:last-child {
     margin-bottom: 0;
-}
-
-/* 버튼 스타일 개선 */
-.btn {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.875rem;
-}
-
-.btn-sm {
-    padding: 0.2rem 0.5rem;
-    font-size: 0.75rem;
 }
 </style>
 {% endblock %} 

@@ -66,13 +66,14 @@ def create_initial_data():
         db.session.rollback()
         return False
 
-# 모델 import
+# 모델 import 순서 조정
 from .user import User
 from .category import Category
 from .topic import Topic
-from .question import Question
 from .statement import Statement
+from .question import Question
 from .answer_record import AnswerRecord
 from .learning_session import LearningSession
+from .wrong_answer_note import WrongAnswerNote
 
-__all__ = ['db', 'init_db', 'create_initial_data', 'User', 'Category', 'Topic', 'Question', 'Statement', 'AnswerRecord', 'LearningSession'] 
+__all__ = ['db', 'init_db', 'create_initial_data', 'User', 'Category', 'Topic', 'Question', 'Statement', 'AnswerRecord', 'LearningSession', 'WrongAnswerNote'] 

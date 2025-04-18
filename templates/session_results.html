@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>학습 결과</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">세션 정보</h5>
+            <p class="card-text">
+                <strong>주제:</strong> {{ session.topic.name }}<br>
+                <strong>시작 시간:</strong> {{ session.start_time.strftime('%Y-%m-%d %H:%M:%S') }}<br>
+                <strong>종료 시간:</strong> {{ session.end_time.strftime('%Y-%m-%d %H:%M:%S') if session.end_time else '진행 중' }}<br>
+                <strong>총 문제 수:</strong> {{ answer_records|length }}<br>
+                <strong>정답률:</strong> {{ "%.1f"|format(accuracy) }}%
+            </p>
+        </div>
+    </div>
+
+    <h3>문제별 결과</h3>
+    {% for record in answer_records %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">문제 {{ loop.index }}</h5>
+            <p class="card-text">{{ record.question.text }}</p>
+            
+            <div class="mb-2">
+                <strong>선택한 답변:</strong>
+                <span class="{% if record.is_correct %}text-success{% else %}text-danger{% endif %}">
+                    {{ record.selected_statement.text }}
+                </span>
+            </div>
+            
+            {% if not record.is_correct %}
+            <div class="mb-2">
+                <strong>정답:</strong>
+                <span class="text-success">{{ record.correct_statement.text }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="mt-2">
+                <span class="badge {% if record.is_correct %}bg-success{% else %}bg-danger{% endif %}">
+                    {{ '정답' if record.is_correct else '오답' }}
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="mt-4">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">홈으로 돌아가기</a>
+    </div>
+</div>
+{% endblock %} 

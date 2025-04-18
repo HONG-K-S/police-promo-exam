@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_statistics') }}">사용자 통계</a></li>
+            <li class="breadcrumb-item active">{{ user.username }}의 상세 통계</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">사용자 정보</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>사용자명:</strong> {{ user.username }}</p>
+                    <p><strong>이메일:</strong> {{ user.email }}</p>
+                    <p><strong>가입일:</strong> {{ user.created_at.strftime('%Y-%m-%d') }}</p>
+                    <p><strong>마지막 로그인:</strong> {{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else '-' }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">학습 통계</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>총 학습 세션:</strong> {{ stats.total_sessions }}</p>
+                    <p><strong>총 문제 수:</strong> {{ stats.total_questions }}</p>
+                    <p><strong>정답률:</strong> {{ "%.1f"|format(stats.accuracy) }}%</p>
+                    <p><strong>평균 소요 시간:</strong> {{ "%.1f"|format(stats.avg_time) }}분</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">카테고리별 정답률</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">시간대별 학습 분포</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="timeDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">최근 학습 기록</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>카테고리</th>
+                            <th>문제 수</th>
+                            <th>정답률</th>
+                            <th>소요 시간</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in stats.recent_records %}
+                        <tr>
+                            <td>{{ record.date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ record.category }}</td>
+                            <td>{{ record.question_count }}</td>
+                            <td>{{ "%.1f"|format(record.accuracy) }}%</td>
+                            <td>{{ "%.1f"|format(record.time_taken) }}분</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// 카테고리별 정답률 차트
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+new Chart(categoryCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ stats.category_stats.labels|tojson }},
+        datasets: [{
+            label: '정답률 (%)',
+            data: {{ stats.category_stats.data|tojson }},
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    stepSize: 20
+                }
+            }
+        }
+    }
+});
+
+// 시간대별 학습 분포 차트
+const timeCtx = document.getElementById('timeDistributionChart').getContext('2d');
+new Chart(timeCtx, {
+    type: 'line',
+    data: {
+        labels: {{ stats.time_distribution.labels|tojson }},
+        datasets: [{
+            label: '학습 세션 수',
+            data: {{ stats.time_distribution.data|tojson }},
+            fill: false,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %} 

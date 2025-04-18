@@ -1,0 +1,71 @@
+<!-- Data Cleanup Modal -->
+<div class="modal fade" id="cleanupModal" tabindex="-1" aria-labelledby="cleanupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cleanupModalLabel">데이터 정리</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cleanupForm" action="{{ url_for('cleanup_user_data') }}" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">정리할 데이터 선택</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="cleanup_type" id="old_activities" value="old_activities" checked>
+                            <label class="form-check-label" for="old_activities">
+                                6개월 이상 된 학습 기록
+                                <small class="text-muted d-block">오래된 학습 기록을 백업 후 삭제합니다.</small>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="cleanup_type" id="wrong_answers" value="wrong_answers">
+                            <label class="form-check-label" for="wrong_answers">
+                                오답 기록
+                                <small class="text-muted d-block">모든 오답 기록을 백업 후 삭제합니다.</small>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="cleanup_type" id="all" value="all">
+                            <label class="form-check-label" for="all">
+                                전체 기록
+                                <small class="text-muted d-block">모든 학습 기록을 백업 후 삭제합니다.</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        선택한 데이터는 백업 후 삭제됩니다. 백업된 데이터는 필요시 복원할 수 있습니다.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-danger" onclick="confirmCleanup()">정리하기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmCleanup() {
+    const form = document.getElementById('cleanupForm');
+    const selectedType = form.querySelector('input[name="cleanup_type"]:checked').value;
+    let message = '';
+    
+    switch(selectedType) {
+        case 'old_activities':
+            message = '6개월 이상 된 학습 기록을 백업 후 삭제하시겠습니까?';
+            break;
+        case 'wrong_answers':
+            message = '모든 오답 기록을 백업 후 삭제하시겠습니까?';
+            break;
+        case 'all':
+            message = '모든 학습 기록을 백업 후 삭제하시겠습니까?';
+            break;
+    }
+    
+    if (confirm(message)) {
+        form.submit();
+    }
+}
+</script> 

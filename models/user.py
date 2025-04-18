@@ -8,22 +8,26 @@ class User(UserMixin, db.Model):
     사용자 정보를 저장하는 모델
     UserMixin을 상속받아 Flask-Login과 호환되도록 함
     """
+    __tablename__ = 'user'
+    
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     name = db.Column(db.String(100))
     rank = db.Column(db.String(50))  # 계급
     department = db.Column(db.String(100))  # 부서
-    email = db.Column(db.String(120))
+    email = db.Column(db.String(120), unique=True, nullable=False)
     phone = db.Column(db.String(20))
     is_active = db.Column(db.Boolean, default=True)
     is_admin = db.Column(db.Boolean, default=False)  # 관리자 권한 여부
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
     last_login = db.Column(db.DateTime)
     
     # Relationships
-    answer_records = db.relationship('AnswerRecord', back_populates='user')
+    answer_records = db.relationship('AnswerRecord', back_populates='user', lazy=True)
     learning_sessions = db.relationship('LearningSession', back_populates='user')
+    wrong_answer_notes = db.relationship('WrongAnswerNote', back_populates='user', lazy=True)
     
     def set_password(self, password):
         """비밀번호 해싱"""

@@ -3,66 +3,178 @@
 {% block title %}사용자 관리{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>사용자 관리</h2>
-        <a href="{{ url_for('admin_add_user') }}" class="btn btn-primary">
-            <i class="fas fa-user-plus"></i> 사용자 추가
-        </a>
-    </div>
-
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>이름</th>
-                    <th>계급</th>
-                    <th>부서</th>
-                    <th>이메일</th>
-                    <th>전화번호</th>
-                    <th>관리자</th>
-                    <th>상태</th>
-                    <th>작업</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                <tr>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.name }}</td>
-                    <td>{{ user.rank }}</td>
-                    <td>{{ user.department }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.phone }}</td>
-                    <td>
-                        {% if user.is_admin %}
-                        <span class="badge bg-success">관리자</span>
-                        {% else %}
-                        <span class="badge bg-secondary">일반</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if user.is_active %}
-                        <span class="badge bg-success">활성</span>
-                        {% else %}
-                        <span class="badge bg-danger">비활성</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <button class="btn btn-sm btn-danger" onclick="deleteUser({{ user.id }})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="container-fluid px-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h4 mb-0 text-gray-800">
+                    <i class="fas fa-users me-2"></i>사용자 관리
+                </h2>
+                <a href="{{ url_for('admin_add_user') }}" class="btn btn-primary">
+                    <i class="fas fa-user-plus me-1"></i> 사용자 추가
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="px-4 py-3">ID</th>
+                            <th class="py-3">이름</th>
+                            <th class="py-3">계급</th>
+                            <th class="py-3">부서</th>
+                            <th class="py-3">이메일</th>
+                            <th class="py-3">전화번호</th>
+                            <th class="py-3 text-center">권한</th>
+                            <th class="py-3 text-center">상태</th>
+                            <th class="py-3 text-end pe-4">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr class="align-middle">
+                            <td class="px-4">{{ user.username }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-primary text-white me-2">
+                                        {{ user.name[:1] }}
+                                    </div>
+                                    {{ user.name }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info text-dark">{{ user.rank }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ user.department }}</span>
+                            </td>
+                            <td>
+                                <a href="mailto:{{ user.email }}" class="text-decoration-none">
+                                    <i class="fas fa-envelope me-1 text-muted"></i>{{ user.email }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="tel:{{ user.phone }}" class="text-decoration-none">
+                                    <i class="fas fa-phone me-1 text-muted"></i>{{ user.phone }}
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                {% if user.is_admin %}
+                                <span class="badge bg-success">관리자</span>
+                                {% else %}
+                                <span class="badge bg-secondary">일반</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if user.is_active %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>활성
+                                </span>
+                                {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times me-1"></i>비활성
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       title="수정">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" 
+                                            onclick="deleteUser({{ user.id }})"
+                                            title="삭제">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+.avatar-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+.table {
+    font-size: 0.875rem;
+    width: 100%;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.75rem 0.25rem;
+    text-align: center;
+}
+
+.table td {
+    white-space: normal;
+    word-wrap: break-word;
+    max-width: 200px;
+    vertical-align: middle;
+}
+
+.table th {
+    padding: 0.75rem 0.25rem;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.65em;
+    font-size: 0.75rem;
+}
+
+.btn-group .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+.btn-group .btn i {
+    font-size: 0.8rem;
+}
+
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    max-width: 100%;
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+
+.table i.fas {
+    font-size: 0.8rem;
+}
+
+.table-responsive {
+    padding: 0 0.25rem;
+}
+
+.d-flex.align-items-center {
+    justify-content: center;
+}
+</style>
 
 <script>
 function deleteUser(userId) {

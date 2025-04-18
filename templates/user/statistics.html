@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}학습 통계{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">학습 통계</h1>
+    
+    <!-- 기본 통계 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">총 문제 수</h5>
+                    <p class="card-text">{{ stats.total_questions }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">정답률</h5>
+                    <p class="card-text">{{ "%.1f"|format(stats.correct_rate) }}%</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">총 학습 시간</h5>
+                    <p class="card-text">{{ stats.study_time }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">학습 일수</h5>
+                    <p class="card-text">{{ stats.study_days }}일</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카테고리별 통계 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">카테고리별 통계</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>카테고리</th>
+                                    <th>총 문제</th>
+                                    <th>정답</th>
+                                    <th>정답률</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in stats.category_stats %}
+                                <tr>
+                                    <td>{{ stat.name }}</td>
+                                    <td>{{ stat.total_questions }}</td>
+                                    <td>{{ stat.correct_answers }}</td>
+                                    <td>{{ "%.1f"|format(stat.correct_rate) }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 시간대별 학습 패턴 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">시간대별 학습 패턴</h5>
+                    <canvas id="timeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 최근 학습 활동 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">최근 학습 활동</h5>
+                    <div class="list-group">
+                        {% for activity in recent_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <p class="mb-1">{{ activity.description }}</p>
+                                <small>{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// 시간대별 학습 패턴 차트
+const timeCtx = document.getElementById('timeChart').getContext('2d');
+const timeChart = new Chart(timeCtx, {
+    type: 'bar',
+    data: {
+        labels: ['새벽 (00-06)', '오전 (06-12)', '오후 (12-18)', '저녁 (18-24)'],
+        datasets: [{
+            label: '학습 횟수',
+            data: {{ time_data|tojson }},
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %} 

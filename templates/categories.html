@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}카테고리 목록{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">카테고리 목록</h1>
+    <div class="row" id="categories-container">
+        <!-- 카테고리들이 여기에 동적으로 로드됩니다 -->
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 카테고리 데이터 로드
+    fetch('/api/categories')
+        .then(response => response.json())
+        .then(categories => {
+            const container = document.getElementById('categories-container');
+            categories.forEach(category => {
+                const card = document.createElement('div');
+                card.className = 'col-md-4 mb-4';
+                card.innerHTML = `
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">${category.name}</h5>
+                            <p class="card-text">${category.description || '설명 없음'}</p>
+                            <a href="/category/${category.id}" class="btn btn-primary">자세히 보기</a>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('카테고리를 불러오는 중 오류가 발생했습니다.');
+        });
+});
+</script>
+{% endblock %} 

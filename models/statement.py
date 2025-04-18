@@ -13,8 +13,8 @@ class Statement(db.Model):
     
     # Relationships
     question = db.relationship('Question', back_populates='statements')
-    selected_answers = db.relationship('AnswerRecord', foreign_keys='AnswerRecord.selected_statement_id', back_populates='selected_statement')
-    correct_answers = db.relationship('AnswerRecord', foreign_keys='AnswerRecord.correct_statement_id', back_populates='correct_statement')
+    selected_answer_records = db.relationship('AnswerRecord', foreign_keys='AnswerRecord.selected_statement_id', back_populates='selected_statement')
+    correct_answer_records = db.relationship('AnswerRecord', foreign_keys='AnswerRecord.correct_statement_id', back_populates='correct_statement')
     
     def __repr__(self):
         return f'<Statement {self.content[:50]}...>' 

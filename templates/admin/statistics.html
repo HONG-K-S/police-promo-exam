@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">사용자별 학습 통계</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>사용자명</th>
+                            <th>이메일</th>
+                            <th>가입일</th>
+                            <th>마지막 로그인</th>
+                            <th>학습 세션</th>
+                            <th>총 문제 수</th>
+                            <th>정답률</th>
+                            <th>상세 통계</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user_stat in user_stats %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('admin_user_statistics', user_id=user_stat.user.id) }}" class="text-decoration-none">
+                                    {{ user_stat.user.username }}
+                                </a>
+                            </td>
+                            <td>{{ user_stat.user.email }}</td>
+                            <td>{{ user_stat.user.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ user_stat.user.last_login.strftime('%Y-%m-%d %H:%M') if user_stat.user.last_login else '-' }}</td>
+                            <td>{{ user_stat.stats.total_sessions }}</td>
+                            <td>{{ user_stat.stats.total_questions }}</td>
+                            <td>
+                                {% if user_stat.stats.total_questions > 0 %}
+                                    {{ "%.1f"|format(user_stat.stats.accuracy) }}%
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_user_statistics', user_id=user_stat.user.id) }}" 
+                                   class="btn btn-sm btn-primary">
+                                    상세 보기
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

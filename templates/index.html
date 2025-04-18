@@ -86,6 +86,14 @@
                     </svg>
                     학습 시작
                 </a>
+                <a href="{{ url_for('user_statistics') }}" class="home-action-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 20V10"></path>
+                        <path d="M12 20V4"></path>
+                        <path d="M6 20v-6"></path>
+                    </svg>
+                    학습 통계
+                </a>
                 <a href="{{ url_for('wrong_notes') }}" class="home-action-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -98,7 +106,7 @@
     </div>
 
     <!-- 관리자 전용 기능 섹션 -->
-    {% if current_user.is_admin %}
+    {% if is_admin_user() %}
     <div class="admin-section">
         <div class="admin-card">
             <h2>관리자 기능</h2>
@@ -113,7 +121,7 @@
                     </svg>
                     <span>문제 관리</span>
                 </a>
-                <a href="{{ url_for('admin_categories') }}" class="admin-action-button">
+                <a href="{{ url_for('admin_manage_categories') }}" class="admin-action-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path>
                     </svg>

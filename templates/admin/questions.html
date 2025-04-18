@@ -1,236 +1,168 @@
 {% extends "base.html" %}
 
+{% block title %}문제 관리{% endblock %}
+
 {% block content %}
-<div class="questions-container">
-    <h1>문제 관리</h1>
-    
-    <!-- 문제 추가/수정 폼 -->
-    <div class="question-form">
-        <h2>{{ '문제 추가' if not question else '문제 수정' }}</h2>
-        <form method="POST" action="{{ url_for('admin_questions') }}">
-            <input type="hidden" name="question_id" value="{{ question.id if question else '' }}">
-            
-            <div class="form-group">
-                <label for="category">카테고리</label>
-                <select name="category" id="category" required>
-                    <option value="">카테고리 선택</option>
-                    {% for category in categories %}
-                    <option value="{{ category.id }}" {% if question and question.category_id == category.id %}selected{% endif %}>
-                        {{ category.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>문제 관리</h1>
+        <a href="{{ url_for('admin_add_question') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> 새 문제 추가
+        </a>
+    </div>
 
-            <div class="form-group">
-                <label for="title">문제 제목</label>
-                <input type="text" name="title" id="title" value="{{ question.title if question else '' }}" required>
-            </div>
-
-            <div class="form-group">
-                <label for="content">문제 내용</label>
-                <textarea name="content" id="content" rows="5" required>{{ question.content if question else '' }}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="correct_answer">정답</label>
-                <input type="text" name="correct_answer" id="correct_answer" value="{{ question.correct_answer if question else '' }}" required>
-            </div>
-
-            <div class="form-group">
-                <label for="explanation">설명</label>
-                <textarea name="explanation" id="explanation" rows="3">{{ question.explanation if question else '' }}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="difficulty">난이도</label>
-                <select name="difficulty" id="difficulty" required>
-                    <option value="1" {% if question and question.difficulty == 1 %}selected{% endif %}>쉬움</option>
-                    <option value="2" {% if question and question.difficulty == 2 %}selected{% endif %}>보통</option>
-                    <option value="3" {% if question and question.difficulty == 3 %}selected{% endif %}>어려움</option>
-                </select>
-            </div>
-
-            <div class="button-group">
-                <button type="submit" class="btn btn-primary">저장</button>
-                {% if question %}
-                <a href="{{ url_for('admin_questions') }}" class="btn btn-secondary">취소</a>
-                {% endif %}
-            </div>
-        </form>
+    <!-- 필터 섹션 -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="category" class="form-label">카테고리</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">전체</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                            {{ category.get_full_path() }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="question_type" class="form-label">문제 유형</label>
+                    <select name="question_type" id="question_type" class="form-select">
+                        <option value="">전체</option>
+                        <option value="correct" {% if selected_type == 'correct' %}selected{% endif %}>옳은 것 고르기</option>
+                        <option value="incorrect" {% if selected_type == 'incorrect' %}selected{% endif %}>틀린 것 고르기</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">검색</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ search }}" placeholder="문제 제목 또는 지문 검색">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">필터 적용</button>
+                    <a href="{{ url_for('admin_questions') }}" class="btn btn-secondary">필터 초기화</a>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- 문제 목록 -->
-    <div class="questions-list">
-        <h2>문제 목록</h2>
-        <div class="filters">
-            <select id="category-filter" onchange="filterQuestions()">
-                <option value="">모든 카테고리</option>
-                {% for category in categories %}
-                <option value="{{ category.id }}">{{ category.name }}</option>
-                {% endfor %}
-            </select>
-            <select id="difficulty-filter" onchange="filterQuestions()">
-                <option value="">모든 난이도</option>
-                <option value="1">쉬움</option>
-                <option value="2">보통</option>
-                <option value="3">어려움</option>
-            </select>
-        </div>
-        
-        <table>
+    <div class="table-responsive">
+        <table class="table table-hover">
             <thead>
                 <tr>
                     <th>카테고리</th>
+                    <th>문제 유형</th>
                     <th>제목</th>
-                    <th>난이도</th>
-                    <th>정답률</th>
+                    <th>옳은 지문</th>
+                    <th>틀린 지문</th>
                     <th>작업</th>
                 </tr>
             </thead>
             <tbody>
-                {% for q in questions %}
-                <tr data-category="{{ q.category_id }}" data-difficulty="{{ q.difficulty }}">
-                    <td>{{ q.category.name }}</td>
-                    <td>{{ q.title }}</td>
+                {% for question in questions %}
+                <tr>
+                    <td>{{ question.category.get_full_path() }}</td>
+                    <td>{{ '옳은 것 고르기' if question.question_type == 'correct' else '틀린 것 고르기' }}</td>
+                    <td>{{ question.title }}</td>
                     <td>
-                        {% if q.difficulty == 1 %}쉬움
-                        {% elif q.difficulty == 2 %}보통
-                        {% else %}어려움{% endif %}
+                        {% for statement in question.statements if statement.is_correct %}
+                            <div class="mb-1">{{ statement.content }}</div>
+                        {% endfor %}
                     </td>
-                    <td>{{ "%.1f"|format(q.correct_rate) }}%</td>
                     <td>
-                        <a href="{{ url_for('admin_questions', edit=q.id) }}" class="btn btn-small">수정</a>
-                        <button onclick="deleteQuestion({{ q.id }})" class="btn btn-small btn-danger">삭제</button>
+                        {% for statement in question.statements if not statement.is_correct %}
+                            <div class="mb-1">{{ statement.content }}</div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <a href="{{ url_for('admin_edit_question', question_id=question.id) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i> 수정
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                    onclick="deleteQuestion({{ question.id }})">
+                                <i class="fas fa-trash"></i> 삭제
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    <!-- 페이지네이션 -->
+    {% if pagination.pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% for page in pagination.iter_pages() %}
+                {% if page %}
+                    <li class="page-item {% if page == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_questions', page=page, 
+                           category=selected_category, question_type=selected_type, search=search) }}">
+                            {{ page }}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
 
-<style>
-.questions-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.question-form {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 30px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: #333;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.button-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.questions-list {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.filters {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.filters select {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-}
-
-th {
-    background: #f8f9fa;
-    font-weight: bold;
-}
-
-.btn-small {
-    padding: 4px 8px;
-    font-size: 0.9em;
-}
-
-.btn-danger {
-    background: #dc3545;
-    color: white;
-}
-
-.btn-danger:hover {
-    background: #c82333;
-}
-</style>
-
 <script>
-function filterQuestions() {
-    const categoryFilter = document.getElementById('category-filter').value;
-    const difficultyFilter = document.getElementById('difficulty-filter').value;
-    
-    document.querySelectorAll('tbody tr').forEach(row => {
-        const category = row.dataset.category;
-        const difficulty = row.dataset.difficulty;
-        
-        const categoryMatch = !categoryFilter || category === categoryFilter;
-        const difficultyMatch = !difficultyFilter || difficulty === difficultyFilter;
-        
-        row.style.display = categoryMatch && difficultyMatch ? '' : 'none';
-    });
-}
-
 function deleteQuestion(questionId) {
     if (confirm('정말로 이 문제를 삭제하시겠습니까?')) {
         fetch(`/admin/questions/${questionId}/delete`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(response => {
-            if (response.ok) {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
                 location.reload();
             } else {
                 alert('문제 삭제 중 오류가 발생했습니다.');
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('문제 삭제 중 오류가 발생했습니다.');
         });
     }
 }
 </script>
+
+<style>
+.table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.table th {
+    text-align: center;
+}
+
+.btn-group {
+    display: flex;
+    gap: 5px;
+}
+
+.table-responsive {
+    padding: 0 0.5rem;
+}
+
+.table > :not(caption) > * > * {
+    padding: 0.75rem 0.5rem;
+}
+</style>
 {% endblock %} 

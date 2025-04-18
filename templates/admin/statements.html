@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="statements-container">
+    <h1>문제 지문 관리</h1>
+    
+    <!-- 문제 지문 추가/수정 폼 -->
+    <div class="statement-form">
+        <h2>{{ '문제 지문 추가' if not statement else '문제 지문 수정' }}</h2>
+        <form method="POST" action="{{ url_for('admin_statements') }}">
+            <input type="hidden" name="statement_id" value="{{ statement.id if statement else '' }}">
+            
+            <div class="form-group">
+                <label for="question">문제 선택</label>
+                <select name="question" id="question" required>
+                    <option value="">문제 선택</option>
+                    {% for q in questions %}
+                    <option value="{{ q.id }}" {% if statement and statement.question_id == q.id %}selected{% endif %}>
+                        {{ q.title }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="content">지문 내용</label>
+                <textarea name="content" id="content" rows="5" required>{{ statement.content if statement else '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="is_correct">정답 여부</label>
+                <div class="radio-group">
+                    <input type="radio" name="is_correct" id="is_correct_true" value="true" {% if statement and statement.is_correct %}checked{% endif %}>
+                    <label for="is_correct_true">정답</label>
+                    
+                    <input type="radio" name="is_correct" id="is_correct_false" value="false" {% if statement and not statement.is_correct %}checked{% endif %}>
+                    <label for="is_correct_false">오답</label>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">저장</button>
+                {% if statement %}
+                <a href="{{ url_for('admin_statements') }}" class="btn btn-secondary">취소</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- 문제 지문 목록 -->
+    <div class="statements-list">
+        <h2>문제 지문 목록</h2>
+        <div class="filters">
+            <select id="question-filter" onchange="filterStatements()">
+                <option value="">모든 문제</option>
+                {% for q in questions %}
+                <option value="{{ q.id }}">{{ q.title }}</option>
+                {% endfor %}
+            </select>
+            <select id="correctness-filter" onchange="filterStatements()">
+                <option value="">모든 지문</option>
+                <option value="true">정답 지문</option>
+                <option value="false">오답 지문</option>
+            </select>
+            <input type="text" id="search-input" placeholder="지문 검색..." onkeyup="filterStatements()">
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>문제</th>
+                    <th>지문 내용</th>
+                    <th>정답 여부</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in statements %}
+                <tr data-question="{{ s.question_id }}" data-correct="{{ s.is_correct|lower }}" data-content="{{ s.content|lower }}">
+                    <td>{{ s.question.title }}</td>
+                    <td>{{ s.content }}</td>
+                    <td>
+                        {% if s.is_correct %}
+                        <span class="badge badge-success">정답</span>
+                        {% else %}
+                        <span class="badge badge-danger">오답</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin_statements', edit=s.id) }}" class="btn btn-small">수정</a>
+                        <button onclick="deleteStatement({{ s.id }})" class="btn btn-small btn-danger">삭제</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- 페이지네이션 -->
+        <div class="pagination">
+            {% if pagination.has_prev %}
+            <a href="{{ url_for('admin_statements', page=pagination.prev_num) }}" class="btn btn-small">&laquo; 이전</a>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num == pagination.page %}
+                    <span class="current-page">{{ page_num }}</span>
+                    {% else %}
+                    <a href="{{ url_for('admin_statements', page=page_num) }}">{{ page_num }}</a>
+                    {% endif %}
+                {% else %}
+                    <span class="ellipsis">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+            <a href="{{ url_for('admin_statements', page=pagination.next_num) }}" class="btn btn-small">다음 &raquo;</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.statements-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.statement-form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+}
+
+.radio-group input[type="radio"] {
+    margin-right: 5px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.statements-list {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filters select,
+.filters input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    min-width: 150px;
+}
+
+#search-input {
+    flex-grow: 1;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    background: #f8f9fa;
+    font-weight: bold;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 0.9em;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.badge-success {
+    background: #28a745;
+    color: white;
+}
+
+.badge-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 20px;
+}
+
+.pagination a,
+.pagination span {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
+.pagination .current-page {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.pagination .ellipsis {
+    border: none;
+}
+</style>
+
+<script>
+function filterStatements() {
+    const questionFilter = document.getElementById('question-filter').value;
+    const correctnessFilter = document.getElementById('correctness-filter').value;
+    const searchText = document.getElementById('search-input').value.toLowerCase();
+    
+    document.querySelectorAll('tbody tr').forEach(row => {
+        const question = row.dataset.question;
+        const correct = row.dataset.correct;
+        const content = row.dataset.content;
+        
+        const questionMatch = !questionFilter || question === questionFilter;
+        const correctnessMatch = !correctnessFilter || correct === correctnessFilter;
+        const searchMatch = !searchText || content.includes(searchText);
+        
+        row.style.display = questionMatch && correctnessMatch && searchMatch ? '' : 'none';
+    });
+}
+
+function deleteStatement(statementId) {
+    if (confirm('정말로 이 문제 지문을 삭제하시겠습니까?')) {
+        fetch(`/admin/statements/${statementId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('문제 지문 삭제 중 오류가 발생했습니다.');
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

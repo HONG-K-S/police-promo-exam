@@ -14,11 +14,17 @@ class Topic(db.Model):
     description = db.Column(db.Text)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
+    parent_id = db.Column(db.Integer, db.ForeignKey('topic.id', name='fk_topic_parent_id'), nullable=True)
     
     # Relationships
     category = db.relationship('Category', back_populates='topics')
     questions = db.relationship('Question', back_populates='topic', cascade="all, delete-orphan")
     learning_sessions = db.relationship('LearningSession', back_populates='topic')
+    subtopics = db.relationship('Topic',
+                                backref=db.backref('parent_topic', remote_side=[id]),
+                                lazy=True,
+                                primaryjoin="Topic.parent_id==Topic.id",
+                                cascade="all, delete-orphan")
     
     def __repr__(self):
         return f'<Topic {self.title}>' 

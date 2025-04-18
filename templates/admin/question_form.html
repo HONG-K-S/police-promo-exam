@@ -12,16 +12,13 @@
             <select name="category_id" id="category" class="form-control" required>
                 <option value="">카테고리 선택</option>
                 {% for category in categories %}
-                <option value="{{ category.id }}" {% if question and question.category_id == category.id %}selected{% endif %}>
-                    {{ category.name }}
-                </option>
+                    {% if category.is_leaf %}
+                    <option value="{{ category.id }}" {% if question and question.category_id == category.id %}selected{% endif %}>
+                        {{ category.get_full_path() }}
+                    </option>
+                    {% endif %}
                 {% endfor %}
             </select>
-        </div>
-
-        <div class="form-group">
-            <label for="title">문제 제목</label>
-            <input type="text" name="title" id="title" class="form-control" value="{{ question.title if question else '' }}" required>
         </div>
 
         <div class="form-group">
@@ -34,18 +31,24 @@
 
         <div class="form-group">
             <label>지문</label>
-            {% for i in range(4) %}
-            <div class="statement-input">
-                <input type="text" name="statements[]" class="form-control" 
-                       value="{{ question.statements[i] if question else '' }}" 
-                       placeholder="지문 {{ i + 1 }}" required>
-                <div class="correct-answer">
-                    <input type="radio" name="correct_answer" value="{{ i + 1 }}" 
-                           {% if question and question.correct_answer == i + 1 %}checked{% endif %} required>
-                    <label>정답</label>
+            <div id="statements-container">
+                <div class="statement-group">
+                    <h4>옳은 지문</h4>
+                    <div class="statement-input">
+                        <input type="text" name="correct_statements[]" class="form-control" 
+                               placeholder="옳은 지문 입력" required>
+                    </div>
+                </div>
+                <div class="statement-group">
+                    <h4>틀린 지문</h4>
+                    {% for i in range(3) %}
+                    <div class="statement-input">
+                        <input type="text" name="incorrect_statements[]" class="form-control" 
+                               placeholder="틀린 지문 {{ i + 1 }}" required>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% endfor %}
         </div>
 
         <div class="form-group">
@@ -55,27 +58,71 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">저장</button>
-            <a href="{{ url_for('admin_manage_questions') }}" class="btn btn-secondary">취소</a>
+            <a href="{{ url_for('admin_questions') }}" class="btn btn-secondary">취소</a>
         </div>
     </form>
 </div>
 
 <style>
+.statement-group {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.statement-group h4 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
 .statement-input {
-    display: flex;
-    align-items: center;
     margin-bottom: 10px;
 }
 
 .statement-input input[type="text"] {
-    flex: 1;
-    margin-right: 10px;
+    width: 100%;
 }
 
-.correct-answer {
+.form-actions {
+    margin-top: 20px;
     display: flex;
-    align-items: center;
-    gap: 5px;
+    gap: 10px;
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const questionType = document.getElementById('question_type');
+    const statementsContainer = document.getElementById('statements-container');
+    
+    // Load existing statements if editing
+    {% if question %}
+        // Get correct statements
+        const correctStatements = [];
+        {% for statement in question.statements if statement.is_correct %}
+            correctStatements.push("{{ statement.content|escape('js') }}");
+        {% endfor %}
+        
+        // Get incorrect statements
+        const incorrectStatements = [];
+        {% for statement in question.statements if not statement.is_correct %}
+            incorrectStatements.push("{{ statement.content|escape('js') }}");
+        {% endfor %}
+        
+        // Set correct statement
+        if (correctStatements.length > 0) {
+            document.querySelector('input[name="correct_statements[]"]').value = correctStatements[0];
+        }
+        
+        // Set incorrect statements
+        const incorrectInputs = document.querySelectorAll('input[name="incorrect_statements[]"]');
+        incorrectStatements.forEach((statement, index) => {
+            if (incorrectInputs[index]) {
+                incorrectInputs[index].value = statement;
+            }
+        });
+    {% endif %}
+});
+</script>
 {% endblock %} 

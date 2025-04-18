@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% endblock %}</title>
+    <title>{% block title %}{% endblock %} - 경찰 승진 시험 준비</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
@@ -28,7 +30,6 @@
             display: flex;
             gap: 10px;
         }
-
         .nav-button {
             color: white;
             text-decoration: none;
@@ -40,11 +41,9 @@
             gap: 5px;
             transition: background-color 0.3s;
         }
-
         .nav-button:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
-
         .nav-icon {
             display: flex;
             align-items: center;
@@ -55,11 +54,9 @@
             transition: background-color 0.3s;
             color: white;
         }
-
         .nav-icon:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
-
         .nav-icon svg {
             fill: white;
         }
@@ -142,18 +139,31 @@
             margin: 0;
             font-size: 12px;
         }
-
         .current-time {
             font-size: 12px;
         }
-
-        .admin-badge {
-            background-color: #ff4757;
+        .admin-badge, .user-badge {
             color: white;
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 10px;
             margin-left: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+        }
+
+        .admin-badge {
+            background-color: #ff4757;
+        }
+        .user-badge {
+            background-color: #3498db;
+        }
+
+        .admin-badge i, .user-badge i {
+            font-size: 10px;
         }
 
         .admin-menu {
@@ -174,6 +184,19 @@
     {% block head %}{% endblock %}
 </head>
 <body {% if request.endpoint == 'login' %}class="login-page"{% endif %}>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+    <div class="container mt-3">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+    </div>
+        {% endif %}
+    {% endwith %}
+    
     <div class="top-bar">
         <div class="nav-buttons">
             <a href="javascript:history.back()" class="nav-icon" title="뒤로가기">
@@ -181,7 +204,7 @@
                     <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
                 </svg>
             </a>
-            {% if current_user.is_authenticated and is_admin() %}
+            {% if current_user.is_authenticated and is_admin_user() %}
                 <a href="{{ url_for('admin_dashboard') }}" class="nav-icon" title="대시보드">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16">
                         <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146zM2.5 14V7.707l5.5-5.5 5.5 5.5V14H10v-4a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v4H2.5z"/>
@@ -208,6 +231,25 @@
                 </svg>
                 학습시작
             </a>
+            {% if is_admin_user() %}
+            <a href="{{ url_for('admin_statistics') }}" class="action-button" title="학습통계">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                학습통계
+            </a>
+            {% else %}
+            <a href="{{ url_for('user_statistics') }}" class="action-button" title="학습통계">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                학습통계
+            </a>
+            {% endif %}
             <a href="{{ url_for('wrong_notes') }}" class="action-button" title="오답노트">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
@@ -220,13 +262,19 @@
             {% if current_user.is_authenticated %}
             <span class="user-name">
                 <a href="{{ url_for('profile') }}">{{ current_user.name or current_user.username }}</a>
-                {% if is_admin() %}
-                <span class="admin-badge">관리자</span>
+                {% if is_admin_user() %}
+                <span class="admin-badge" title="관리자">
+                    <i class="fas fa-shield-alt"></i>
+                </span>
+                {% else %}
+                <span class="user-badge" title="사용자">
+                    <i class="fas fa-user"></i>
+                </span>
                 {% endif %}
             </span>
-            {% if is_admin() %}
+            {% if is_admin_user() %}
             <div class="admin-menu">
-                <a href="{{ url_for('admin_categories') }}" class="nav-button admin-button">
+                <a href="{{ url_for('admin_manage_categories') }}" class="nav-button admin-button">
                     <i class="fas fa-folder"></i>
                     카테고리 관리
                 </a>
@@ -276,6 +324,7 @@
         };
     </script>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html> 

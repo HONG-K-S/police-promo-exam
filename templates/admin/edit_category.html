@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}카테고리 수정{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="category-form-container">
+        <h1>카테고리 수정</h1>
+        
+        <form method="POST" class="category-form">
+            <div class="form-group">
+                <label for="name">카테고리 이름</label>
+                <input type="text" id="name" name="name" class="form-control" 
+                       value="{{ category.name }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">설명</label>
+                <textarea id="description" name="description" class="form-control" rows="3">{{ category.description or '' }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="parent_id">상위 카테고리</label>
+                <select id="parent_id" name="parent_id" class="form-control">
+                    <option value="">없음 (최상위 카테고리)</option>
+                    {% for cat_id, cat_name in category_choices %}
+                        <option value="{{ cat_id }}" {% if category.parent_id == cat_id %}selected{% endif %}>
+                            {{ cat_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <div class="form-check">
+                    <input type="checkbox" id="is_leaf" name="is_leaf" class="form-check-input" 
+                           {% if category.is_leaf %}checked{% endif %}>
+                    <label class="form-check-label" for="is_leaf">잎사귀 카테고리 (하위 카테고리를 가질 수 없음)</label>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">저장</button>
+                <a href="{{ url_for('admin_manage_categories') }}" class="btn btn-secondary">취소</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.category-form-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+.form-check {
+    margin-top: 0.5rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}카테고리 추가{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">카테고리 추가</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">카테고리 이름</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">설명</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="parent_id" class="form-label">상위 카테고리</label>
+                            <select class="form-select" id="parent_id" name="parent_id">
+                                <option value="">없음 (최상위 카테고리)</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" style="padding-left: {{ category.level * 20 }}px">
+                                        {{ category.full_path }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="is_leaf" name="is_leaf">
+                            <label class="form-check-label" for="is_leaf">하위 카테고리를 가질 수 없는 최종 카테고리</label>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">카테고리 추가</button>
+                            <a href="{{ url_for('admin_manage_categories') }}" class="btn btn-secondary">취소</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
